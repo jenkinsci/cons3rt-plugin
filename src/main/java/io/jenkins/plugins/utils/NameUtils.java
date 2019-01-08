@@ -69,6 +69,18 @@ public final class NameUtils {
         }
     }
     
+    public static void checkNullOrEmpty(final String string) throws InvalidNameException {
+        if (string == null) {
+            throw new InvalidNameException("A value must be provided", "(null)");
+        } else if (string.length() == 0) {
+            throw new InvalidNameException("The value provided cannot be blank", "");
+        } else if (string.trim().length() == 0) {
+            throw new InvalidNameException("The value provided cannot consist entirely of whitespace", "<" + string + ">");
+        } else if (string.trim().length() != string.length()) {
+            throw new InvalidNameException("The value provided cannot have leading or trailing whitespace", "<" + string + ">");
+        }
+    }
+    
     public static void checkCreatedUsernameRestrictions(String deploymentRunUsername) throws InvalidNameException {
     	 if (deploymentRunUsername == null) {
              throw new InvalidNameException("Username cannot be null", "(null)");

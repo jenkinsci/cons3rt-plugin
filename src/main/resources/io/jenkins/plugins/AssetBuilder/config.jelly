@@ -8,7 +8,7 @@
 	    </f:entry>
 	
 	    <f:entry title="Description" field="description" help="/plugin/cons3rt/help-assetDescription.html">
-	        <f:textarea />
+	        <f:textarea checkUrl="'${rootURL}/descriptorByName/io.jenkins.plugins.AssetBuilder/checkDescription?description='+escape(this.value)"/>
 	    </f:entry>
 	
 		<f:entry title="Version" field="version">

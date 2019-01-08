@@ -6,7 +6,7 @@
 	<parent>
 		<groupId>org.jenkins-ci.plugins</groupId>
 		<artifactId>plugin</artifactId>
-		<version>3.22</version>
+		<version>3.32</version>
 		<relativePath />
 	</parent>
 
@@ -16,7 +16,7 @@
 
 	<properties>
 		<jenkins.version>2.7.3</jenkins.version>
-		<java.level>7</java.level>
+		<java.level>8</java.level>
 	</properties>
 
 	<name>CONS3RT Plugin</name>

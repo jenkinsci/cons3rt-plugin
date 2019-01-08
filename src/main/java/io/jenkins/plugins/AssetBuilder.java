@@ -29,8 +29,8 @@ import io.jenkins.plugins.datatype.FileObject;
 import io.jenkins.plugins.datatype.PlatformType;
 import io.jenkins.plugins.exceptions.InvalidNameException;
 import io.jenkins.plugins.utils.AssetFileUtils;
-import io.jenkins.plugins.utils.NameUtils;
 import io.jenkins.plugins.utils.ContextLogger;
+import io.jenkins.plugins.utils.NameUtils;
 import net.sf.json.JSONObject;
 
 public class AssetBuilder extends Builder {
@@ -45,6 +45,18 @@ public class AssetBuilder extends Builder {
 			//Test that name satisfies cons3rt standards:
 			try {
 				NameUtils.checkAssetNameRestrictions(name);
+			} catch (InvalidNameException e ) {
+				return FormValidation.error(e.getMessage());
+			}
+			
+			return FormValidation.ok();
+		}
+		
+		public FormValidation doCheckDescription(@QueryParameter("description") String description) {
+			
+			
+			try {
+				NameUtils.checkNullOrEmpty(description);
 			} catch (InvalidNameException e ) {
 				return FormValidation.error(e.getMessage());
 			}

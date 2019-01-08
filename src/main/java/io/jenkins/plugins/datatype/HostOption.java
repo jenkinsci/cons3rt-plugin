@@ -12,11 +12,13 @@ import org.kohsuke.stapler.QueryParameter;
 import hudson.Extension;
 import hudson.model.AbstractDescribableImpl;
 import hudson.model.Descriptor;
+import hudson.security.Permission;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import io.jenkins.plugins.Cons3rtPublisher;
 import io.jenkins.plugins.Cons3rtSite;
 import io.jenkins.plugins.utils.HttpWrapper.HTTPException;
+import jenkins.model.Jenkins;
 
 public class HostOption extends AbstractDescribableImpl<HostOption> {
 
@@ -113,6 +115,8 @@ public class HostOption extends AbstractDescribableImpl<HostOption> {
         public FormValidation doGetRoles(@QueryParameter("siteName") String siteName,
     			@QueryParameter("deploymentId") Integer deploymentId) {
 
+        	Jenkins.getInstance().checkPermission(Permission.UPDATE);
+        	
     		if (siteName == null || deploymentId == null) {
     			return FormValidation.warning("Please provide a site and deployment id");
     		}
@@ -140,6 +144,8 @@ public class HostOption extends AbstractDescribableImpl<HostOption> {
         public FormValidation doGetNetworks(@QueryParameter("siteName") String siteName,
     			@QueryParameter("deploymentId") Integer deploymentId, @QueryParameter("cloudspaceName") String cloudspaceName) {
 
+        	Jenkins.getInstance().checkPermission(Permission.UPDATE);
+        	
     		if (siteName == null || deploymentId == null) {
     			return FormValidation.warning("Please provide a site and deployment id");
     		}

@@ -43,6 +43,7 @@ import com.cloudbees.plugins.credentials.common.StandardCertificateCredentials;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
+import hudson.util.Secret;
 import io.jenkins.plugins.Cons3rtPublisher;
 import io.jenkins.plugins.datatype.DeploymentRunOptions;
 import io.jenkins.plugins.datatype.Network;
@@ -434,14 +435,15 @@ public class HttpWrapper {
 	public String launchDeployment(RunConfiguration launchRequest) throws HTTPException {
 		final String url = this.baseUrl + "/rest/api/deployments/" + launchRequest.getDeploymentId() + "/execute";
 		
-		final String json = this.createJsonFromLaunchRequest(launchRequest);
+		final String json = HttpWrapper.createJsonFromLaunchRequest(launchRequest);
 		HttpWrapper.LOGGER.log(Level.INFO, json);
 		return this.putJson(url, json);
 	}
 
-	private String createJsonFromLaunchRequest(final RunConfiguration launchRequest) {
+	public static String createJsonFromLaunchRequest(final RunConfiguration launchRequest) {
 		final DeploymentRunOptions options = new DeploymentRunOptions(launchRequest);
         GsonBuilder builder = new GsonBuilder().setPrettyPrinting();
+        builder.registerTypeAdapter(Secret.class, new SecretSerializer()) ;
         Gson gson = builder.create();
         return gson.toJson(options);
 	}

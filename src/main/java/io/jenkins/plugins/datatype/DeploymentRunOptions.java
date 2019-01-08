@@ -4,6 +4,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import hudson.util.Secret;
+
 public class DeploymentRunOptions {
 	
 	private String deploymentRunName;
@@ -11,7 +13,7 @@ public class DeploymentRunOptions {
 	// TESTS_EXECUTED_RESOURCES_RELEASED | TESTS_EXECUTED_RESOURCES_RESERVED (toggle from a boolean)
 	private String endState;
 	
-	private String password;
+	private Secret password;
 	
 	private String username;
 	
@@ -38,7 +40,11 @@ public class DeploymentRunOptions {
 		this.retainOnError = request.isRetainOnError();
 		this.properties = request.getProperties();
 		
-		this.setHostOptions(new HashSet<>(request.getHostOptions()));
+		if( request.getHostOptions() != null ) {
+			this.setHostOptions(new HashSet<>(request.getHostOptions()));
+		} else {
+			this.setHostOptions(new HashSet<HostOption>());
+		}
 	}
 
 	public String getDeploymentRunName() {
@@ -49,7 +55,7 @@ public class DeploymentRunOptions {
 		return endState;
 	}
 
-	public String getPassword() {
+	public Secret getPassword() {
 		return password;
 	}
 
@@ -109,7 +115,7 @@ public class DeploymentRunOptions {
 		this.endState = endState;
 	}
 
-	public void setPassword(String password) {
+	public void setPassword(Secret password) {
 		this.password = password;
 	}
 

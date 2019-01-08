@@ -14,11 +14,14 @@ import org.kohsuke.stapler.QueryParameter;
 import hudson.Extension;
 import hudson.model.AbstractDescribableImpl;
 import hudson.model.Descriptor;
+import hudson.security.Permission;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
+import hudson.util.Secret;
 import io.jenkins.plugins.Cons3rtPublisher;
 import io.jenkins.plugins.Cons3rtSite;
 import io.jenkins.plugins.utils.HttpWrapper.HTTPException;
+import jenkins.model.Jenkins;
 
 public class RunConfiguration extends AbstractDescribableImpl<RunConfiguration> {
 	
@@ -32,7 +35,7 @@ public class RunConfiguration extends AbstractDescribableImpl<RunConfiguration> 
 	
 	private String deploymentRunName;
 	
-	private String password;
+	private Secret password;
 	
 	private boolean releaseResources;
 	
@@ -48,9 +51,11 @@ public class RunConfiguration extends AbstractDescribableImpl<RunConfiguration> 
 	
 	private List<HostOption> hostOptions;
 	
+	public RunConfiguration() {};
+	
 	@DataBoundConstructor
 	public RunConfiguration(final Integer deploymentId, final String deploymentRunName, final String cloudspaceName, 
-			final boolean releaseResources, final String username, final String password, final boolean locked,
+			final boolean releaseResources, final String username, final Secret password, final boolean locked,
 			final boolean endExisting, final boolean retainOnError, List<Property> properties, List<HostOption> hostOptions) {
 		this.deploymentId = deploymentId;
 		this.deploymentRunName = deploymentRunName;
@@ -81,7 +86,7 @@ public class RunConfiguration extends AbstractDescribableImpl<RunConfiguration> 
 		return deploymentRunName;
 	}
 
-	public String getPassword() {
+	public Secret getPassword() {
 		return password;
 	}
 
@@ -141,7 +146,7 @@ public class RunConfiguration extends AbstractDescribableImpl<RunConfiguration> 
 		this.deploymentRunName = deploymentRunName;
 	}
 
-	public void setPassword(String password) {
+	public void setPassword(Secret password) {
 		this.password = password;
 	}
 
@@ -192,6 +197,8 @@ public class RunConfiguration extends AbstractDescribableImpl<RunConfiguration> 
         public FormValidation doGetCloudspaces(@QueryParameter("siteName") String siteName,
     			@QueryParameter("deploymentId") Integer deploymentId) {
 
+        	Jenkins.getInstance().checkPermission(Permission.UPDATE);
+        	
     		if (siteName == null || deploymentId == null) {
     			return FormValidation.warning("Please provide a site and deployment id");
     		}
