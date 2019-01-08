@@ -1,0 +1,10 @@
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form">
+    <f:entry field="key" title="Key">
+        <f:textbox checkUrl="'${rootURL}/descriptorByName/io.jenkins.plugins.Cons3rtPublisher/checkProperty?value='+escape(this.value)"/>
+    </f:entry>
+    
+    <f:entry field="value" title="Value">
+        <f:textbox checkUrl="'${rootURL}/descriptorByName/io.jenkins.plugins.Cons3rtPublisher/checkProperty?value='+escape(this.value)"/>
+    </f:entry>
+</j:jelly>

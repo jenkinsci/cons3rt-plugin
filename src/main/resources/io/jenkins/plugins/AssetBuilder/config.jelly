@@ -1,0 +1,76 @@
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+	<?jelly escape-by-default='true'?>
+    
+    <f:section title="Basic Information:">
+		<f:entry title="Name" field="name" help="/plugin/cons3rt/help-assetName.html">
+	        <f:textbox checkUrl="'${rootURL}/descriptorByName/io.jenkins.plugins.AssetBuilder/checkName?name='+escape(this.value)" />
+	    </f:entry>
+	
+	    <f:entry title="Description" field="description" help="/plugin/cons3rt/help-assetDescription.html">
+	        <f:textarea />
+	    </f:entry>
+	
+		<f:entry title="Version" field="version">
+			<f:textbox />
+		</f:entry>
+	
+		<f:entry title="Vendor" field="vendor">
+			<f:textbox />
+		</f:entry>
+	</f:section>
+	
+	<f:section title="Resource Requirements:">
+		<f:entry title="Platform" field="platform">
+	        <f:select />
+	    </f:entry>
+	
+	    <f:entry title="Architecture" field="architecture">
+	        <f:select />
+	    </f:entry>
+	
+		<f:entry title="Bits" field="bits">
+			<f:select />
+		</f:entry>
+	
+		<f:entry title="Cpu" field="cpu">
+			<f:number />
+		</f:entry>
+		
+		<f:entry title="Memory" field="memory">
+			<f:number />
+		</f:entry>
+		
+		<f:entry title="Storage" field="storage">
+			<f:number />
+		</f:entry>
+	</f:section>
+	
+	<f:section title="Content:">
+		<f:entry title="Installation Script" field="installationScriptFilePath" help="/plugin/cons3rt/help-assetInstallationScript.html">
+	    	<f:textbox name="installationScriptFilePath" checkUrl="'${rootURL}/descriptorByName/io.jenkins.plugins.Cons3rtPublisher/checkFilepath?filepath='+escape(this.value)" />
+	    </f:entry>
+	    
+	    <f:entry title="License File" field="licenseFilePath" help="/plugin/cons3rt/help-assetLicenseFile.html">
+	    	<f:textbox name="licenseFilePath" />
+	    </f:entry>
+	    
+	    <f:entry title="Documentation File" field="documentationFilePath" help="/plugin/cons3rt/help-assetDocumentationFile.html">
+	    	<f:textbox name="documentationFilePath" />
+	    </f:entry>
+	    
+	    <f:block>
+	      <f:entry title="Media Files:">
+		      <f:repeatableProperty field="mediaFilePaths" hasHeader="true" add="Add File">
+	      		<f:entry title=""> 
+	  	    		<div align="right"> 
+	  	      			<f:repeatableDeleteButton /> 
+	  	    		</div>
+	  	  		</f:entry>
+	  		  </f:repeatableProperty>
+  		  </f:entry>
+  		</f:block>
+	    
+	</f:section>
+	
+</j:jelly>

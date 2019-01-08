@@ -1,0 +1,62 @@
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form" xmlns:c="/lib/credentials">
+  <!-- nothing to configure -->
+  <f:section title="${%CONS3RT Configuration}">
+  
+    <f:entry title="${%CONS3RT Sites}"
+      description="${%CONS3RT instances that projects will want to connect to}">
+      
+      <f:repeatable var="site" name="sites" items="${descriptor.sites}">
+        <table width="100%">
+        
+          <f:section title="Site" />
+        
+          <f:entry title="${%Name} (optional)" help="/plugin/cons3rt/help-name.html">
+            <f:textbox name="name" value="${site.name}" />
+          </f:entry>
+        
+          <f:entry title="${%Url}" help="/plugin/cons3rt/help-url.html">
+            <f:textbox name="url" value="${site.url}" checkUrl="'${rootURL}/descriptorByName/io.jenkins.plugins.Cons3rtPublisher/checkUrl?url='+escape(this.value)" />
+          </f:entry>
+          
+          <f:entry title="${%Token}" help="/plugin/cons3rt/help-token.html">
+            <c:select name="tokenId" field="tokenId" value="${site.tokenId}" checkUrl="'${rootURL}/descriptorByName/io.jenkins.plugins.Cons3rtPublisher/checkTokenId?tokenId='+escape(this.value)" />
+          </f:entry>
+          
+          <f:section title="Choose Authentication Type">
+	          <!-- Radio block for username vs. certificate -->
+			  <f:radioBlock title="Username" name="authenticationType" value="username"
+	          			checked="${site.authenticationTypeEquals('username')}" inline="true" help="/plugin/cons3rt/help-authenticationType.html">
+	              <nested>
+	                <f:entry title="${%Username}" help="/plugin/cons3rt/help-username.html">
+	                  <f:textbox name="username" value="${site.username}" checkUrl="'${rootURL}/descriptorByName/io.jenkins.plugins.Cons3rtPublisher/checkUsername?username='+escape(this.value)" />
+	                </f:entry>
+	              
+	                <f:validateButton title="Check connection" progress="Checking..." method="usernameLoginCheck" with="url,tokenId,username" />
+	              </nested>
+	          </f:radioBlock>
+	  
+	    	  <f:radioBlock title="Certificate" name="authenticationType" value="certificate"
+	                checked="${site.authenticationTypeEquals('certificate')}" inline="true">
+	      		  <nested>
+	      		    <f:entry title="${%Certificate}" help="/plugin/cons3rt/help-certificate.html">
+	                  <c:select name="certificateId" field="certificateId" value="${site.certificateId}" checkUrl="'${rootURL}/descriptorByName/io.jenkins.plugins.Cons3rtPublisher/checkCertificateId?certificateId='+escape(this.value)" />
+	                </f:entry>
+	              
+	                <f:validateButton title="Check connection" progress="Checking..." method="certificateLoginCheck" with="url,tokenId,certificateId" />
+	              </nested>
+	    	  </f:radioBlock>
+    	  </f:section>
+          
+          <f:entry title="">
+            <div align="right">
+              <f:repeatableDeleteButton />
+            </div>
+          </f:entry>
+        </table>
+      </f:repeatable>
+    </f:entry>
+  </f:section>
+
+
+</j:jelly>

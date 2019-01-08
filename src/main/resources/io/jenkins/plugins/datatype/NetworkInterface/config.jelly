@@ -1,0 +1,14 @@
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form">
+    <f:entry field="networkName" title="Network">
+        <f:select value="${instance.networkName}" onclick="updateListBox(this,this.getAttribute('fillurl'))" onfocus="updateListBox(this,this.getAttribute('fillurl'))"/>
+    </f:entry>
+    
+    <f:entry field="internalIpAddress" title="Request a static Ip address on this network" >
+      <f:textbox />
+    </f:entry>
+    
+    <f:entry field="isPrimaryConnection" >
+      <f:checkbox checked="${instance.primaryNetwork}" title="Use this network as the default route"/>
+    </f:entry>
+</j:jelly>

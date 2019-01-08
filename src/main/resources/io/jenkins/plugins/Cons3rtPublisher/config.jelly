@@ -1,0 +1,56 @@
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+	<?jelly escape-by-default='true'?>
+    
+    <f:block>
+    <f:entry title="${%CONS3RT Site}" field="siteName" name="ssh.siteName" help="/plugin/cons3rt/help-site.html">
+        <f:select/>
+    </f:entry>
+    </f:block>
+    
+    <f:entry title="">
+		<f:checkbox name="attemptUploadOnBuildFailure" checked="${instance.attemptUploadOnBuildFailure}" title="Attempt upload or update if build fails"/>
+    </f:entry>
+    
+	<f:section title="Create or Update Asset">
+		<!-- Radio block for create vs. update -->
+		<f:radioBlock title="Create new asset" name="actionType" value="createAsset"
+	                checked="true" inline="true" help="/plugin/cons3rt/help-assetAction.html">
+	    </f:radioBlock>
+  
+	    <f:radioBlock title="Update an existing asset" name="actionType" value="updateAsset"
+	                checked="${instance.isActionType('updateAsset')}" inline="true">
+	      <f:entry title="${%Existing Asset Id}" field="assetId" help="/plugin/cons3rt/help-assetId.html">
+	        <f:number checkUrl="'${rootURL}/descriptorByName/io.jenkins.plugins.Cons3rtPublisher/checkAssetId?assetId='+escape(this.value)" />
+	      </f:entry>
+	    </f:radioBlock>
+    </f:section>
+    
+    <f:section title="Asset Location:">
+	    <!-- Radio block for built asset vs filepath -->
+		<f:radioBlock title="Use Build-Step CONS3RT Asset" name="assetStyle" value="prebuilt"
+	                checked="true" inline="true" help="/plugin/cons3rt/help-assetLocation.html">
+	      
+	      <f:entry title="Asset Name" field="prebuiltAssetName">
+	        <f:select onfocus="updateListBox(this,this.getAttribute('fillurl'))"/>
+	      </f:entry>
+	      
+	      <f:entry title="" help="/plugin/cons3rt/help-assetDeleteAfterUpload.html">
+		    <f:checkbox name="deleteCreatedAssetAfterUpload" checked="${instance.deleteCreatedAssetAfterUpload}" title="Delete asset after upload"/>
+    	  </f:entry>
+	    </f:radioBlock>
+	  
+	    <f:radioBlock title="Specify filepath" name="assetStyle" value="filepath"
+	                checked="${instance.isAssetStyle('filepath')}" inline="true">
+	      <f:entry title="${%Filepath}" field="filepath" help="/plugin/cons3rt/help-assetFilepath.html">
+	    	<f:textbox />
+	      </f:entry>
+	    </f:radioBlock>
+    </f:section>
+    
+    <j:set var="siteName" value="${instance.siteName}"/>
+    <j:set var="launchRequest" value="${instance.launchRequest}"/>
+    <f:section title="Secondary Actions:">
+    	<f:optionalProperty field="launchRequest" title="Optionally launch a deployment" help="/plugin/cons3rt/help-launchDeployment.html"/>
+    </f:section>
+</j:jelly>

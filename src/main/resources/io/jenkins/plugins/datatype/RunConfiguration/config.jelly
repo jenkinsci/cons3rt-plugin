@@ -1,0 +1,74 @@
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form">
+
+<f:section title="Base Settings">
+  <f:entry title="${%Existing Deployment Id}" field="deploymentId" help="/plugin/cons3rt/help-deploymentId.html">
+    <f:number value="${launchRequest.deploymentId}" checkUrl="'${rootURL}/descriptorByName/io.jenkins.plugins.Cons3rtPublisher/checkDeploymentId?deploymentId='+escape(this.value)" />
+  </f:entry>
+        
+  <f:entry title="${%Deployment Run Name}" field="deploymentRunName">
+    <f:textbox name="deploymentRunName" value="${launchRequest.deploymentRunName}" checkUrl="'${rootURL}/descriptorByName/io.jenkins.plugins.Cons3rtPublisher/checkDeploymentRunName?deploymentRunName='+escape(this.value)" />
+  </f:entry>
+    
+  <f:entry title="Cloudspace" field="cloudspaceName" name="ssh.cloudspaceId" help="/plugin/cons3rt/help-cloudspaceName.html">
+    <f:select value="${instance.cloudspaceName}" onfocus="updateListBox(this,this.getAttribute('fillurl'))"/>
+  </f:entry>
+        
+  <f:validateButton title="Refresh Available Cloudspaces" progress="Fetching..." method="getCloudspaces" with="siteName,deploymentId" />
+</f:section>
+    
+<f:section title="Credentials">
+  <f:entry title="${%Created Username}" field="username" help="/plugin/cons3rt/help-deploymentRunUsername.html">
+    <f:textbox name="username" value="${launchRequest.username}" checkUrl="'${rootURL}/descriptorByName/io.jenkins.plugins.Cons3rtPublisher/checkDeploymentRunUsername?deploymentRunUsername='+escape(this.value)" />
+  </f:entry>
+        
+  <f:entry title="${%Password}" field="password" help="/plugin/cons3rt/help-deploymentRunPassword.html">
+    <f:password name="password" value="${launchRequest.password}" checkUrl="'${rootURL}/descriptorByName/io.jenkins.plugins.Cons3rtPublisher/checkDeploymentRunPassword?deploymentRunPassword='+escape(this.value)" />
+  </f:entry>
+</f:section>
+        
+<f:section title="Options">
+    <f:entry title="Automatically release deployment resources" field="releaseResources" >
+      <f:checkbox checked="${launchRequest.releaseResources}"/>
+    </f:entry>
+    		
+    <f:entry title="Lock the deployment run" field="locked">
+      <f:checkbox checked="${launchRequest.locked}" />
+    </f:entry>
+    		
+    <f:entry title="Release any other run instance of this deployment" field="endExisting">
+	  <f:checkbox checked="${launchRequest.endExisting}"/>
+    </f:entry>
+    		
+    <f:entry title="Reserve the deployment run if an error occurs" field="retainOnError">
+	  <f:checkbox checked="${launchRequest.retainOnError}"/>
+    </f:entry>
+</f:section>   
+
+
+<j:set var="cloudspaceName" value="${instance.cloudspaceName}"/>
+<f:section title="Configure Resources">
+  <f:block>
+  	<f:repeatableProperty field="hostOptions" hasHeader="true">
+  	<f:entry title=""> 
+  	    <div align="right"> 
+  	      <f:repeatableDeleteButton /> 
+  	    </div>
+  	  </f:entry>
+  	</f:repeatableProperty>
+  </f:block>
+</f:section>
+        
+<f:section title="Properties">
+  <f:block>
+    <f:repeatableProperty field="properties" hasHeader="true">
+      <f:entry title=""> 
+  	    <div align="right"> 
+  	      <f:repeatableDeleteButton /> 
+  	    </div>
+  	  </f:entry>
+  	</f:repeatableProperty>
+  </f:block>
+</f:section>
+        
+</j:jelly>

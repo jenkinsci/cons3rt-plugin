@@ -1,0 +1,51 @@
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form">
+  <f:section title="Host">
+    <f:block>
+    <f:entry title="System Role" field="systemRole">
+    	<f:select value="${instance.systemRole}" onfocus="updateListBox(this,this.getAttribute('fillurl'))"/>
+    </f:entry>
+        
+    <f:validateButton title="Refresh Available Roles" progress="Fetching..." method="getRoles" with="siteName,deploymentId" />
+    
+    </f:block>
+  </f:section>
+    
+    <f:section title="System Specs">
+  	  <f:block>
+        <f:entry title="CPU Count" field="cpus">
+    	  <f:number name="cpus" value="${instance.cpus}"/>
+        </f:entry>
+      </f:block>
+    </f:section>
+    
+    <f:entry title="Memory" field="ram">
+    	<f:number name="ram" value="${instance.ram}"/>
+    </f:entry>
+    
+    <f:section title="Additional Disks">
+  	  <f:block>
+  	    <f:repeatableProperty field="additionalDisks" hasHeader="true" add="Add Additional Disk">
+  	      <f:entry title=""> 
+  	        <div align="right"> 
+  	          <f:repeatableDeleteButton /> 
+  	        </div>
+  	      </f:entry>
+  	    </f:repeatableProperty>
+  	  </f:block>
+	</f:section>
+	
+	<f:section title="Network Interfaces">
+  	  <f:block>
+  	    <f:repeatableProperty field="networkInterfaces" hasHeader="true" add="Add Network Interface">
+  	      <f:entry title=""> 
+  	        <div align="right"> 
+  	          <f:repeatableDeleteButton /> 
+  	        </div>
+  	      </f:entry>
+  	    </f:repeatableProperty>
+  	  </f:block>
+  	  <f:validateButton title="Refresh Available Networks" progress="Fetching..." method="getNetworks" with="siteName,deploymentId,cloudspaceName" />
+	</f:section>
+    
+</j:jelly>
