@@ -21,6 +21,7 @@
 
 	<name>CONS3RT Plugin</name>
 	<description>This plugin allows you to create or update CONS3RT assets and launch existing deployments.</description>
+	<url>https://wiki.jenkins.io/display/JENKINS/CONS3RT+Plugin</url>
 	<licenses>
 		<license>
 			<name>The MIT license</name>
@@ -28,6 +29,13 @@
 			<distribution>repo</distribution>
 		</license>
 	</licenses>
+	<developers>
+    	  <developer>
+      	    <id>cons3rt</id>
+            <name>John Paulo</name>
+            <email>john.paulo@jackpinetech.com</email>
+          </developer>
+        </developers>
 
 	<repositories>
 		<repository>
