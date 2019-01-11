@@ -5,8 +5,6 @@
     <f:entry title="System Role" field="systemRole">
     	<f:select value="${instance.systemRole}" onfocus="updateListBox(this,this.getAttribute('fillurl'))"/>
     </f:entry>
-        
-    <f:validateButton title="Refresh Available Roles" progress="Fetching..." method="getRoles" with="siteName,deploymentId" />
     
     </f:block>
   </f:section>
@@ -45,7 +43,6 @@
   	      </f:entry>
   	    </f:repeatableProperty>
   	  </f:block>
-  	  <f:validateButton title="Refresh Available Networks" progress="Fetching..." method="getNetworks" with="siteName,deploymentId,cloudspaceName" />
 	</f:section>
     
 </j:jelly>

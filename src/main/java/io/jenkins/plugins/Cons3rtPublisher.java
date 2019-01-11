@@ -3,26 +3,18 @@ package io.jenkins.plugins;
 import java.io.File;
 import java.io.IOException;
 import java.text.ParseException;
+import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import javax.naming.InvalidNameException;
-
-import org.apache.commons.lang.StringUtils;
-import org.jenkinsci.plugins.plaincredentials.StringCredentials;
-import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
-import org.kohsuke.stapler.bind.JavaScriptMethod;
 
-import com.cloudbees.plugins.credentials.CredentialsMatchers;
-import com.cloudbees.plugins.credentials.common.StandardCertificateCredentials;
 import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
 
 import hudson.Extension;
@@ -31,14 +23,11 @@ import hudson.Launcher;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.BuildListener;
-import hudson.model.Item;
 import hudson.model.Result;
-import hudson.security.ACL;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.BuildStepMonitor;
 import hudson.tasks.Publisher;
 import hudson.tasks.Recorder;
-import hudson.util.CopyOnWriteList;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import io.jenkins.plugins.datatype.Network;
@@ -62,9 +51,9 @@ public class Cons3rtPublisher extends Recorder {
 	private static final String prebuiltAssetType = "prebuilt";
 
 	private static final String filepathAssetType = "filepath";
-
-	private String siteName;
-
+	
+	private Cons3rtSite site;
+	
 	private Integer assetId;
 	
 	private String assetStyle;
@@ -81,17 +70,17 @@ public class Cons3rtPublisher extends Recorder {
 	
 	private RunConfiguration launchRequest;
 	
-	public static final Set<Entry<String,Integer>> availableCloudspaces = new HashSet<>();
+	public static final Map<Integer, Set<Entry<String, Integer>>> availableCloudspaces = new HashMap<>();
 	
 	public static final Set<String> availableRoles = new HashSet<>();
 
 	public static final Set<Network> availableNetworks = new HashSet<>();;
 
 	@DataBoundConstructor
-	public Cons3rtPublisher(String siteName, Integer assetId, String assetStyle, String filepath, final String prebuiltAssetName, final String actionType, final boolean attemptUploadOnBuildFailure,
+	public Cons3rtPublisher(final Cons3rtSite site, Integer assetId, String assetStyle, String filepath, final String prebuiltAssetName, final String actionType, final boolean attemptUploadOnBuildFailure,
 			final boolean deleteCreatedAssetAfterUpload, final RunConfiguration launchRequest) {
 		
-		this.siteName = siteName;
+		this.setSite(site);
 		
 		Cons3rtPublisher.LOGGER.log(Level.INFO, "Entering constructor with values: " + assetStyle + " " + actionType);
 		
@@ -142,17 +131,21 @@ public class Cons3rtPublisher extends Recorder {
 			this.launchRequest.setCloudspaceId(Cons3rtPublisher.getCloudspaceIdForName(this.launchRequest.getCloudspaceName()));
 		}
 		
-		LOGGER.log(Level.INFO, "Received Site named: " + this.siteName + " with action type: " + this.actionType + " and asset id: " + this.assetId);
-		
+		LOGGER.log(Level.INFO, "Received Site: " + this.site.getUrl() + " with action type: " + this.actionType + " and asset id: " + this.assetId);
 	}
 
 	public static Integer getCloudspaceIdForName(final String cloudspaceName) {
 		Integer retval = null;
 		if(cloudspaceName != null) {
-			for( final Entry<String, Integer> cloudspace : availableCloudspaces) {
-				if( cloudspace.getKey().equals(cloudspaceName)) {
-					retval = cloudspace.getValue();
-					break;
+			for( final Entry<Integer, Set<Entry<String, Integer>>> entry : availableCloudspaces.entrySet()) {
+				
+				final Set<Entry<String, Integer>> cloudspaces = entry.getValue();
+				
+				for( final Entry<String, Integer> cloudspace : cloudspaces ) {
+					if( cloudspace.getKey().equals(cloudspaceName)) {
+						retval = cloudspace.getValue();
+						break;
+					}
 				}
 			}
 		}
@@ -161,10 +154,6 @@ public class Cons3rtPublisher extends Recorder {
 
 	public String getActionType() {
 		return this.actionType;
-	}
-
-	public String getSiteName() {
-		return this.siteName;
 	}
 
 	public boolean isDeleteCreatedAssetAfterUpload() {
@@ -187,7 +176,7 @@ public class Cons3rtPublisher extends Recorder {
 		return this.filepath;
 	}
 
-	public static Set<Entry<String, Integer>> getAvailableCloudspaces() {
+	public static Map<Integer, Set<Entry<String, Integer>>> getAvailableCloudspaces() {
 		return Cons3rtPublisher.availableCloudspaces;
 	}
 	
@@ -203,6 +192,14 @@ public class Cons3rtPublisher extends Recorder {
 		return assetStyle;
 	}
 
+	public Cons3rtSite getSite() {
+		return site;
+	}
+
+	public void setSite(Cons3rtSite site) {
+		this.site = site;
+	}
+
 	public void setAssetStyle(String assetStyle) {
 		this.assetStyle = assetStyle;
 	}
@@ -215,9 +212,9 @@ public class Cons3rtPublisher extends Recorder {
 		this.launchRequest = launchRequest;
 	}
 
-	public static void setAvailableCloudspaces(Set<Entry<String, Integer>> availableCloudspaces) {
-		Cons3rtPublisher.availableCloudspaces.clear();
-		Cons3rtPublisher.availableCloudspaces.addAll(availableCloudspaces);
+	
+	public static void addAvailableCloudspaces(final Integer key, final Set<Entry<String, Integer>> cloudspaces) {
+		Cons3rtPublisher.availableCloudspaces.put(key, cloudspaces);
 	}
 	
 	public static void setAvailableNetworks(Set<Network> availableNetworks) {
@@ -236,10 +233,6 @@ public class Cons3rtPublisher extends Recorder {
 
 	public void setAttemptUploadOnBuildFailure(boolean attemptUploadOnBuildFailure) {
 		this.attemptUploadOnBuildFailure = attemptUploadOnBuildFailure;
-	}
-
-	public void setSiteName(String siteName) {
-		this.siteName = siteName;
 	}
 
 	public void setAssetId(Integer assetId) {
@@ -268,8 +261,7 @@ public class Cons3rtPublisher extends Recorder {
             return true;
         }
 		
-		final Cons3rtSite site = getSite();
-		if (site == null) {
+		if (this.site == null) {
 			log.log("No CONS3RT site found. This is likely a configuration problem.", Level.SEVERE);
 			build.setResult(Result.UNSTABLE);
 			return true;
@@ -282,9 +274,9 @@ public class Cons3rtPublisher extends Recorder {
 			log.log("Attempting to upload or update despite build failure, as requested.");
 		}
 		
-		final String baseUrl = site.getUrl();
-		final String token = site.getToken();
-		final String authenticationType = site.getAuthenticationType();
+		final String baseUrl = this.site.getUrl();
+		final String token = this.site.getToken();
+		final String authenticationType = this.site.getAuthenticationType();
 
 		try {
 			log.log("Site Url: " + baseUrl + " authentication type: " + authenticationType + " action type: " + this.getActionType());
@@ -292,9 +284,9 @@ public class Cons3rtPublisher extends Recorder {
 			final HttpWrapperBuilder builder = new HttpWrapper.HttpWrapperBuilder(baseUrl, token, authenticationType);
 			
 			if(Cons3rtPublisher.isCeritificateAuthentication(authenticationType)) {
-				builder.certificate(site.getCertificate());
+				builder.certificate(this.site.getCertificate());
 			} else if (Cons3rtPublisher.isUsernameAuthentication(authenticationType)) {
-				builder.username(site.getUsername());
+				builder.username(this.site.getUsername());
 			}
 			
 			final HttpWrapper wrapper = builder.build();
@@ -380,20 +372,6 @@ public class Cons3rtPublisher extends Recorder {
 		return Boolean.valueOf(this.runRequested());
 	}
 
-	public Cons3rtSite getSite(final String name) {
-		Cons3rtSite[] sites = DESCRIPTOR.getSites();
-
-		for (Cons3rtSite site : sites) {
-			if (site.getSitename().equals(name))
-				return site;
-		}
-		return null;
-	}
-	
-	public Cons3rtSite getSite() {
-		return this.getSite(this.siteName);
-	}
-	
 	public static boolean isCeritificateAuthentication(final String authenticationType) {
 		return authenticationType.equals(Cons3rtSite.certificateAuthentication);
 	}
@@ -421,18 +399,6 @@ public class Cons3rtPublisher extends Recorder {
 			super(clazz);
 		}
 
-		private final CopyOnWriteList<Cons3rtSite> sites = new CopyOnWriteList<Cons3rtSite>();
-
-		public Cons3rtSite getSite(final String name) {
-			Cons3rtSite[] sites = this.getSites();
-
-			for (Cons3rtSite site : sites) {
-				if (site.getSitename().equals(name))
-					return site;
-			}
-			return null;
-		}
-		
 		@Override
 		public String getDisplayName() {
 			return "Create or Update a CONS3RT Asset";
@@ -447,18 +413,19 @@ public class Cons3rtPublisher extends Recorder {
 		public Publisher newInstance(StaplerRequest req, JSONObject formData)
 				throws hudson.model.Descriptor.FormException {
 			
+			final String output = formData.toString();
+        	LOGGER.info(output);
+			
 			if(req != null) {
 				final Cons3rtPublisher instance = (Cons3rtPublisher) req.bindJSON(clazz, formData);
 				
 				Cons3rtPublisher.LOGGER.log(Level.INFO, "Entering new instance with values: " + instance.assetStyle + " " + instance.actionType);
+				Cons3rtPublisher.LOGGER.log(Level.INFO, "Entering new instance with values: " + instance.getSite().getUrl());
+
 				return instance;
 			} else {
 				return null;
 			}
-		}
-
-		public Cons3rtSite[] getSites() {
-			return sites.toArray(new Cons3rtSite[0]);
 		}
 
 		public FormValidation doCheckUrl(@QueryParameter("url") String url) {
@@ -526,13 +493,6 @@ public class Cons3rtPublisher extends Recorder {
 			return FormValidation.ok();
 		}
 
-		public FormValidation doCheckSiteName(@QueryParameter final String value) {
-			if ((value == null) || (value.trim().isEmpty())) {
-				return FormValidation.error("A site name must be provided");
-			}
-			return FormValidation.ok();
-		}
-		
 		public FormValidation doCheckProperty(@QueryParameter final String value) {
 			if ((value == null) || (value.trim().isEmpty())) {
 				return FormValidation.error("A value must be provided");
@@ -554,84 +514,6 @@ public class Cons3rtPublisher extends Recorder {
 			return FormValidation.ok();
 		}
 		
-		public FormValidation doUsernameLoginCheck(@QueryParameter("url") String url, @QueryParameter("tokenId") String tokenId,
-				@QueryParameter("username") String username) {
-
-			LOGGER.log(Level.INFO, "Received url " + url + " tokenId " + tokenId);
-			
-			if (url == null || tokenId == null) {
-				return FormValidation.warning("Please provide a url and token");
-			}
-			
-			if(username == null) {
-				return FormValidation.warning("Please provide username");
-			}
-			
-			final Cons3rtSite site = new Cons3rtSite(null, url, tokenId, Cons3rtSite.usernameAuthentication, null, username, false);
-			try {
-				try {
-					site.testConnection(LOGGER);
-				} catch (HTTPException e) {
-					LOGGER.log(Level.SEVERE, e.getMessage());
-					throw new IOException("Connection Failed.");
-				}
-			} catch (IOException e) {
-				LOGGER.log(Level.SEVERE, e.getMessage());
-				return FormValidation.error(e.getMessage());
-			}
-
-			return FormValidation.ok("Successful connection");
-		}
-		
-		public FormValidation doCertificateLoginCheck(@QueryParameter("url") String url, @QueryParameter("tokenId") String tokenId,
-				@QueryParameter("certificateId") String certificateId) {
-
-			LOGGER.log(Level.INFO, "Received url " + url + " tokenId " + tokenId);
-			
-			if (url == null || tokenId == null) {
-				return FormValidation.warning("Please provide a url and token");
-			}
-			
-			if(certificateId == null) {
-				return FormValidation.warning("Please provide certificate");
-			}
-			
-			final Cons3rtSite site = new Cons3rtSite(null, url, tokenId, Cons3rtSite.certificateAuthentication, certificateId, null, false);
-			try {
-				try {
-					site.testConnection(LOGGER);
-				} catch (HTTPException e) {
-					LOGGER.log(Level.SEVERE, e.getMessage());
-					throw new IOException("Connection Failed.");
-				}
-			} catch (IOException e) {
-				LOGGER.log(Level.SEVERE, e.getMessage());
-				return FormValidation.error(e.getMessage());
-			}
-
-			return FormValidation.ok("Successful connection");
-		}
-		
-		public ListBoxModel doFillCertificateIdItems(@AncestorInPath Item owner) {
-
-			return new StandardListBoxModel().includeMatchingAs(ACL.SYSTEM, owner, StandardCertificateCredentials.class,
-					Cons3rtSite.NO_REQUIREMENTS, CredentialsMatchers.always());
-		}
-
-		public ListBoxModel doFillTokenIdItems(@AncestorInPath Item owner) {
-
-			return new StandardListBoxModel().includeMatchingAs(ACL.SYSTEM, owner, StringCredentials.class,
-					Cons3rtSite.NO_REQUIREMENTS, CredentialsMatchers.always());
-		}
-		
-		public ListBoxModel doFillSiteNameItems() {
-			ListBoxModel m = new ListBoxModel();
-			for (Cons3rtSite site : Cons3rtPublisher.DESCRIPTOR.getSites()) {
-				m.add(site.getSitename());
-			}
-			return m;
-		}
-		
 		public ListBoxModel doFillPrebuiltAssetNameItems() {
 			LOGGER.info("Entering load prebuild names");
 			final StandardListBoxModel retval = new StandardListBoxModel();
@@ -642,27 +524,6 @@ public class Cons3rtPublisher extends Recorder {
 			return retval;
 		}
 		
-		@JavaScriptMethod
-		public void mark() {
-			
-		}
-		
-		@Override
-		public boolean configure(StaplerRequest req, JSONObject formData) {
-			List<Cons3rtSite> sitesFromRequest = req.bindJSONToList(Cons3rtSite.class, formData.get("sites"));
-
-			for (Iterator<?> iter = sitesFromRequest.iterator(); iter.hasNext();) {
-				Cons3rtSite sshSite = (Cons3rtSite) iter.next();
-				if (StringUtils.isBlank(sshSite.getUrl()) || StringUtils.isBlank(sshSite.getTokenId())) {
-					LOGGER.log(Level.WARNING, "removing site: " + sshSite.toString());
-					iter.remove();
-				}
-			}
-			sites.replaceBy(sitesFromRequest);
-
-			save();
-			return true;
-		}
 	}
 
 }

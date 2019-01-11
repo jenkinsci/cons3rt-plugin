@@ -10,6 +10,7 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
 import hudson.Extension;
+import hudson.RelativePath;
 import hudson.model.AbstractDescribableImpl;
 import hudson.model.Descriptor;
 import hudson.security.Permission;
@@ -90,40 +91,37 @@ public class HostOption extends AbstractDescribableImpl<HostOption> {
         	return "Host Option"; 
         	} 
         
-        public ListBoxModel doFillSystemRoleItems(@QueryParameter("siteName") String siteName,
-    			@QueryParameter("deploymentId") Integer deploymentId) {
-    		
-    		ListBoxModel m = new ListBoxModel();
-    		if (siteName != null || deploymentId != null) {
-    			final Cons3rtSite site = Cons3rtPublisher.DESCRIPTOR.getSite(siteName);
-    			if (site != null) {
-    				try {
-    					Cons3rtPublisher.setAvailableRoles(site.getHostRoles(LOGGER, deploymentId));
-    				} catch (HTTPException e) {
-    					return m;
-    				}
-    			}
-    		}
-    		
-    		for (String role : Cons3rtPublisher.availableRoles) {
-    			m.add(role);
-    		}
-    		
-    		return m;
-    	}
+		public ListBoxModel doFillSystemRoleItems() {
+			
+			ListBoxModel m = new ListBoxModel();
+			
+			for (String role : Cons3rtPublisher.availableRoles) {
+				m.add(role);
+			}
+
+			return m;
+		}
         
-        public FormValidation doGetRoles(@QueryParameter("siteName") String siteName,
-    			@QueryParameter("deploymentId") Integer deploymentId) {
+        public FormValidation doGetRoles(
+    			@QueryParameter("deploymentId") Integer deploymentId,
+    			@RelativePath("../../site") @QueryParameter String url,
+				@RelativePath("../../site") @QueryParameter String tokenId,
+				@RelativePath("../../site") @QueryParameter String authenticationType,
+				@RelativePath("../../site") @QueryParameter String certificateId,
+				@RelativePath("../../site") @QueryParameter String username) {
 
         	Jenkins.getInstance().checkPermission(Permission.UPDATE);
         	
-    		if (siteName == null || deploymentId == null) {
+        	// Attempt to determine authenticationType as it appears it wont come across:
+        				final Cons3rtSite site;
+        				if (certificateId != null && !certificateId.isEmpty()) {
+        					site = new Cons3rtSite(url, tokenId, Cons3rtSite.certificateAuthentication, certificateId, username);
+        				} else {
+        					site = new Cons3rtSite(url, tokenId, Cons3rtSite.usernameAuthentication, certificateId, username);
+        				}
+        	
+    		if (site == null || deploymentId == null) {
     			return FormValidation.warning("Please provide a site and deployment id");
-    		}
-    		
-    		final Cons3rtSite site = Cons3rtPublisher.DESCRIPTOR.getSite(siteName);
-    		if( site == null ) {
-    			return FormValidation.warning("A site was not found. This is likely a configuration issue.");
     		}
     		
     		try {
@@ -141,18 +139,13 @@ public class HostOption extends AbstractDescribableImpl<HostOption> {
     		return FormValidation.ok("Successfully Fetched Available Roles For Selection");
     	}
         
-        public FormValidation doGetNetworks(@QueryParameter("siteName") String siteName,
+        public FormValidation doGetNetworks(@QueryParameter("site") Cons3rtSite site,
     			@QueryParameter("deploymentId") Integer deploymentId, @QueryParameter("cloudspaceName") String cloudspaceName) {
 
         	Jenkins.getInstance().checkPermission(Permission.UPDATE);
         	
-    		if (siteName == null || deploymentId == null) {
+    		if (site == null || deploymentId == null) {
     			return FormValidation.warning("Please provide a site and deployment id");
-    		}
-    		
-    		final Cons3rtSite site = Cons3rtPublisher.DESCRIPTOR.getSite(siteName);
-    		if( site == null ) {
-    			return FormValidation.warning("A site was not found. This is likely a configuration issue.");
     		}
     		
     		try {

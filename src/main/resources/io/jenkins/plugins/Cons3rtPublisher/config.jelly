@@ -1,16 +1,9 @@
 <?jelly escape-by-default='true'?>
-<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form" xmlns:c="/lib/credentials">
 	<?jelly escape-by-default='true'?>
     
-    <f:block>
-    <f:entry title="${%CONS3RT Site}" field="siteName" name="ssh.siteName" help="/plugin/cons3rt/help-site.html">
-        <f:select/>
-    </f:entry>
-    </f:block>
-    
-    <f:entry title="">
-		<f:checkbox name="attemptUploadOnBuildFailure" checked="${instance.attemptUploadOnBuildFailure}" title="Attempt upload or update if build fails"/>
-    </f:entry>
+    <f:property field="site" />
+    <j:set var="site" value="${instance.site}"/>
     
 	<f:section title="Create or Update Asset">
 		<!-- Radio block for create vs. update -->
@@ -25,6 +18,10 @@
 	      </f:entry>
 	    </f:radioBlock>
     </f:section>
+    
+    <f:entry title="">
+		<f:checkbox name="attemptUploadOnBuildFailure" checked="${instance.attemptUploadOnBuildFailure}" title="Attempt upload or update if build fails"/>
+    </f:entry>
     
     <f:section title="Asset Location:">
 	    <!-- Radio block for built asset vs filepath -->
@@ -48,7 +45,6 @@
 	    </f:radioBlock>
     </f:section>
     
-    <j:set var="siteName" value="${instance.siteName}"/>
     <j:set var="launchRequest" value="${instance.launchRequest}"/>
     <f:section title="Secondary Actions:">
     	<f:optionalProperty field="launchRequest" title="Optionally launch a deployment" help="/plugin/cons3rt/help-launchDeployment.html"/>

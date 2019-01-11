@@ -3,15 +3,21 @@ package io.jenkins.plugins.datatype;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import javax.servlet.ServletException;
+
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
+import org.kohsuke.stapler.StaplerRequest;
 
 import hudson.Extension;
+import hudson.RelativePath;
 import hudson.model.AbstractDescribableImpl;
 import hudson.model.Descriptor;
 import hudson.security.Permission;
@@ -22,6 +28,7 @@ import io.jenkins.plugins.Cons3rtPublisher;
 import io.jenkins.plugins.Cons3rtSite;
 import io.jenkins.plugins.utils.HttpWrapper.HTTPException;
 import jenkins.model.Jenkins;
+import net.sf.json.JSONObject;
 
 public class RunConfiguration extends AbstractDescribableImpl<RunConfiguration> {
 	
@@ -39,7 +46,7 @@ public class RunConfiguration extends AbstractDescribableImpl<RunConfiguration> 
 	
 	private boolean releaseResources;
 	
-	private String username;
+	private String createdUsername;
 	
 	private boolean locked;
 	
@@ -55,13 +62,13 @@ public class RunConfiguration extends AbstractDescribableImpl<RunConfiguration> 
 	
 	@DataBoundConstructor
 	public RunConfiguration(final Integer deploymentId, final String deploymentRunName, final String cloudspaceName, 
-			final boolean releaseResources, final String username, final Secret password, final boolean locked,
+			final boolean releaseResources, final String createdUsername, final Secret password, final boolean locked,
 			final boolean endExisting, final boolean retainOnError, List<Property> properties, List<HostOption> hostOptions) {
 		this.deploymentId = deploymentId;
 		this.deploymentRunName = deploymentRunName;
 		this.cloudspaceName = cloudspaceName;
 		this.releaseResources = releaseResources;
-		this.username = username;
+		this.createdUsername = createdUsername;
 		this.password = password;
 		this.locked = locked;
 		this.endExisting = endExisting;
@@ -90,8 +97,8 @@ public class RunConfiguration extends AbstractDescribableImpl<RunConfiguration> 
 		return password;
 	}
 
-	public String getUsername() {
-		return username;
+	public String getCreatedUsername() {
+		return createdUsername;
 	}
 
 	public boolean isLocked() {
@@ -154,8 +161,8 @@ public class RunConfiguration extends AbstractDescribableImpl<RunConfiguration> 
 		this.releaseResources = releaseResources;
 	}
 
-	public void setUsername(String username) {
-		this.username = username;
+	public void setCreatedUsername(String createdUsername) {
+		this.createdUsername = createdUsername;
 	}
 	
 	public List<HostOption> getHostOptions() {
@@ -172,57 +179,118 @@ public class RunConfiguration extends AbstractDescribableImpl<RunConfiguration> 
         	return "Run Configuration";
         	} 
         
-        public ListBoxModel doFillCloudspaceNameItems(@QueryParameter("siteName") String siteName,
-    			@QueryParameter("deploymentId") Integer deploymentId) {
-    		
+        public ListBoxModel doFillCloudspaceNameItems(
+        		@QueryParameter("deploymentId") Integer deploymentId,
+        		Cons3rtSite site) {
+        	
     		ListBoxModel m = new ListBoxModel();
-    		if (siteName != null || deploymentId != null) {
-    			final Cons3rtSite site = Cons3rtPublisher.DESCRIPTOR.getSite(siteName);
-    			if (site != null) {
-    				try {
-    					Cons3rtPublisher.setAvailableCloudspaces(site.getAvailableCloudspaces(LOGGER, deploymentId));
-    				} catch (HTTPException e) {
-    					return m;
-    				}
-    			}
-    		}
     		
-    		for (Entry<String, Integer> cloudspace : Cons3rtPublisher.availableCloudspaces) {
-    			m.add(cloudspace.getKey());
-    		}
+    		LOGGER.info("Calling do fill cloudspaces with dep id: " + deploymentId + " and site value: " + ((site != null) ? "non-null" : "null"));
     		
+    		if(Cons3rtPublisher.availableCloudspaces.containsKey(deploymentId)) {
+    			
+    			final Set<Entry<String, Integer>> cloudspaces = Cons3rtPublisher.availableCloudspaces.get(deploymentId);
+    			
+    			for (Entry<String, Integer> cloudspace : cloudspaces) {
+        			m.add(cloudspace.getKey());
+        		}
+    			
+    		} else if( site != null && deploymentId != null) {
+				try {
+					Cons3rtPublisher.addAvailableCloudspaces(deploymentId, site.getAvailableCloudspaces(LOGGER, deploymentId));
+				
+					for (Entry<String, Integer> cloudspace : Cons3rtPublisher.availableCloudspaces.get(deploymentId)) {
+		    			m.add(cloudspace.getKey());
+		    		}
+				} catch (HTTPException e) {
+					LOGGER.info("Caught error fetching cloudspaces. " + e.getMessage());
+				}
+    		}
+				
     		return m;
     	}
         
-        public FormValidation doGetCloudspaces(@QueryParameter("siteName") String siteName,
-    			@QueryParameter("deploymentId") Integer deploymentId) {
+        public FormValidation doGetCloudspaces(
+        		@QueryParameter("deploymentId") Integer deploymentId,
+        		@RelativePath("../../site") @QueryParameter String url,
+				@RelativePath("../../site") @QueryParameter String tokenId,
+				@RelativePath("../../site") @QueryParameter String authenticationType,
+				@RelativePath("../../site") @QueryParameter String certificateId,
+				@RelativePath("../../site") @QueryParameter String username) throws ServletException, IOException {
 
         	Jenkins.getInstance().checkPermission(Permission.UPDATE);
-        	
-    		if (siteName == null || deploymentId == null) {
-    			return FormValidation.warning("Please provide a site and deployment id");
-    		}
-    		
-    		final Cons3rtSite site = Cons3rtPublisher.DESCRIPTOR.getSite(siteName);
-    		if( site == null ) {
-    			return FormValidation.warning("A site was not found. This is likely a configuration issue.");
-    		}
-    		
-    		try {
-    			try {
-    				Cons3rtPublisher.setAvailableCloudspaces(site.getAvailableCloudspaces(LOGGER, deploymentId));
-    			} catch (HTTPException e) {
-    				LOGGER.log(Level.SEVERE, e.getMessage());
-    				throw new IOException("Fetch of available cloudspaces failed.");
-    			}
-    		} catch (IOException e) {
-    			LOGGER.log(Level.SEVERE, e.getMessage());
-    			return FormValidation.error(e.getMessage());
-    		}
 
-    		return FormValidation.ok("Successfully Fetched Available Clouspaces For Selection");
-    	}
-    } 
+			if (deploymentId != null) {
+				// Attempt to determine authenticationType as it appears it wont come across:
+				final Cons3rtSite site;
+				if (certificateId != null && !certificateId.isEmpty()) {
+					site = new Cons3rtSite(url, tokenId, Cons3rtSite.certificateAuthentication, certificateId,
+							username);
+				} else {
+					site = new Cons3rtSite(url, tokenId, Cons3rtSite.usernameAuthentication, certificateId, username);
+				}
+
+				try {
+					Cons3rtPublisher.addAvailableCloudspaces(deploymentId, site.getAvailableCloudspaces(LOGGER, deploymentId));
+				} catch (HTTPException e) {
+					Cons3rtPublisher.addAvailableCloudspaces(deploymentId, new HashSet<>());
+					LOGGER.log(Level.SEVERE, e.getMessage());
+					return FormValidation.error("Fetch of available cloud spaces for deployment id: " + deploymentId + " failed. " + e.getMessage());
+				}
+
+				return FormValidation.ok("Successfully Fetched Available Run Resources");
+			} else {
+				return FormValidation.error("A deployment id must be provided in order to fetch available cloudspaces for the deployment.");
+			}
+
+		}
+        
+        @Override
+		public RunConfiguration newInstance(StaplerRequest req, JSONObject formData)
+				throws hudson.model.Descriptor.FormException {
+			LOGGER.info("New run conf instance: " + formData.toString());
+        	
+        	return req.bindJSON(clazz, formData);
+		}
+        
+		public FormValidation doGetResources(@QueryParameter("deploymentId") Integer deploymentId,
+				@QueryParameter("cloudspaceName") String cloudspaceName,
+				@RelativePath("../../site") @QueryParameter String url,
+				@RelativePath("../../site") @QueryParameter String tokenId,
+				@RelativePath("../../site") @QueryParameter String authenticationType,
+				@RelativePath("../../site") @QueryParameter String certificateId,
+				@RelativePath("../../site") @QueryParameter String username) throws IOException {
+
+			Jenkins.getInstance().checkPermission(Permission.UPDATE);
+
+			if (deploymentId != null && cloudspaceName != null) {
+
+				// Attempt to determine authenticationType as it appears it wont come across:
+				final Cons3rtSite site;
+				if (certificateId != null && !certificateId.isEmpty()) {
+					site = new Cons3rtSite(url, tokenId, Cons3rtSite.certificateAuthentication, certificateId,
+							username);
+				} else {
+					site = new Cons3rtSite(url, tokenId, Cons3rtSite.usernameAuthentication, certificateId, username);
+				}
+
+				try {
+					Cons3rtPublisher.setAvailableRoles(site.getHostRoles(LOGGER, deploymentId));
+					Cons3rtPublisher.setAvailableNetworks(site.getAvailableNetworks(LOGGER, deploymentId,
+							Cons3rtPublisher.getCloudspaceIdForName(cloudspaceName)));
+				} catch (HTTPException e) {
+					LOGGER.log(Level.SEVERE, e.getMessage());
+					throw new IOException("Fetch of available host roles failed.");
+				}
+
+				return FormValidation.ok("Successfully Fetched Available Run Resources");
+			}
+
+			return FormValidation.ok("Successfully Fetched Available Run Resources");
+		}
+
+	}
+	
 	
 	
 }

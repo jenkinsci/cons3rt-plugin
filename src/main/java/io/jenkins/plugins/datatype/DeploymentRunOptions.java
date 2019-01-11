@@ -33,7 +33,7 @@ public class DeploymentRunOptions {
 		this.deploymentRunName = request.getDeploymentRunName();
 		this.virtualizationRealmId = request.getCloudspaceId();
 		this.endState = (request.isReleaseResources()) ? "TESTS_EXECUTED_RESOURCES_RELEASED" : "TESTS_EXECUTED_RESOURCES_RESERVED";
-		this.username = request.getUsername();
+		this.username = request.getCreatedUsername();
 		this.password = request.getPassword();
 		this.locked = request.isLocked();
 		this.endExisting = request.isEndExisting();

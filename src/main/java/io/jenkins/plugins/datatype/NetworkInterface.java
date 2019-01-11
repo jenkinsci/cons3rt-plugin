@@ -10,10 +10,12 @@ import org.kohsuke.stapler.QueryParameter;
 import hudson.Extension;
 import hudson.model.AbstractDescribableImpl;
 import hudson.model.Descriptor;
+import hudson.security.Permission;
 import hudson.util.ListBoxModel;
 import io.jenkins.plugins.Cons3rtPublisher;
 import io.jenkins.plugins.Cons3rtSite;
 import io.jenkins.plugins.utils.HttpWrapper.HTTPException;
+import jenkins.model.Jenkins;
 
 public class NetworkInterface extends AbstractDescribableImpl<NetworkInterface> {
 
@@ -80,22 +82,12 @@ public class NetworkInterface extends AbstractDescribableImpl<NetworkInterface> 
         	return "Network Interface"; 
         	} 
         
-        public ListBoxModel doFillNetworkNameItems(@QueryParameter("siteName") String siteName,
-    			@QueryParameter("deploymentId") Integer deploymentId, @QueryParameter("cloudspaceName") String cloudspaceName) {
+        public ListBoxModel doFillNetworkNameItems() {
     		
-    		ListBoxModel m = new ListBoxModel();
-    		if (siteName != null || deploymentId != null) {
-    			final Cons3rtSite site = Cons3rtPublisher.DESCRIPTOR.getSite(siteName);
-    			if (site != null) {
-    				try {
-    					final Integer cloudspaceId = Cons3rtPublisher.getCloudspaceIdForName(cloudspaceName);
-    					Cons3rtPublisher.setAvailableNetworks(site.getAvailableNetworks(LOGGER, deploymentId, cloudspaceId));
-    				} catch (HTTPException e) {
-    					return m;
-    				}
-    			}
-    		}
-    		
+        	Jenkins.getInstance().checkPermission(Permission.UPDATE);
+        	
+        	ListBoxModel m = new ListBoxModel();
+        	
     		for (Network network : Cons3rtPublisher.availableNetworks) {
     			m.add(network.getName());
     		}

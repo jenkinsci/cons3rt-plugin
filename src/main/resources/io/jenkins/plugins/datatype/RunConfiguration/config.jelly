@@ -10,16 +10,17 @@
     <f:textbox name="deploymentRunName" value="${launchRequest.deploymentRunName}" checkUrl="'${rootURL}/descriptorByName/io.jenkins.plugins.Cons3rtPublisher/checkDeploymentRunName?deploymentRunName='+escape(this.value)" />
   </f:entry>
     
-  <f:entry title="Cloudspace" field="cloudspaceName" name="ssh.cloudspaceId" help="/plugin/cons3rt/help-cloudspaceName.html">
-    <f:select value="${instance.cloudspaceName}" onfocus="updateListBox(this,this.getAttribute('fillurl'))"/>
+  <f:entry title="Cloudspace" field="cloudspaceName" help="/plugin/cons3rt/help-cloudspaceName.html">
+    <f:select value="${instance.cloudspaceName}" />
   </f:entry>
+  
+  <f:validateButton title="Refresh Available Cloudspaces" progress="Fetching..." method="getCloudspaces" with="deploymentId,url,tokenId,authenticationType,certificateId,username" />
         
-  <f:validateButton title="Refresh Available Cloudspaces" progress="Fetching..." method="getCloudspaces" with="siteName,deploymentId" />
 </f:section>
     
 <f:section title="Credentials">
-  <f:entry title="${%Created Username}" field="username" help="/plugin/cons3rt/help-deploymentRunUsername.html">
-    <f:textbox name="username" value="${launchRequest.username}" checkUrl="'${rootURL}/descriptorByName/io.jenkins.plugins.Cons3rtPublisher/checkDeploymentRunUsername?deploymentRunUsername='+escape(this.value)" />
+  <f:entry title="${%Created Username}" field="createdUsername" help="/plugin/cons3rt/help-deploymentRunUsername.html">
+    <f:textbox name="createdUsername" value="${launchRequest.createdUsername}" checkUrl="'${rootURL}/descriptorByName/io.jenkins.plugins.Cons3rtPublisher/checkDeploymentRunUsername?deploymentRunUsername='+escape(this.value)" />
   </f:entry>
         
   <f:entry title="${%Password}" field="password" help="/plugin/cons3rt/help-deploymentRunPassword.html">
@@ -45,9 +46,10 @@
     </f:entry>
 </f:section>   
 
-
+<j:set var="site" value="${instance.site}"/>
 <j:set var="cloudspaceName" value="${instance.cloudspaceName}"/>
 <f:section title="Configure Resources">
+  <f:validateButton title="Load Available Resources" progress="Fetching..." method="getResources" with="deploymentId,cloudspaceName,url,tokenId,authenticationType,certificateId,username" />
   <f:block>
   	<f:repeatableProperty field="hostOptions" hasHeader="true">
   	<f:entry title=""> 

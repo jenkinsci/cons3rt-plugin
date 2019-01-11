@@ -1,0 +1,40 @@
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form" xmlns:c="/lib/credentials">
+<?jelly escape-by-default='true'?>
+
+<f:section title="Site" />
+
+          <f:entry title="${%Url}" help="/plugin/cons3rt/help-url.html">
+            <f:textbox name="url" value="${instance.url}" checkUrl="'${rootURL}/descriptorByName/io.jenkins.plugins.Cons3rtPublisher/checkUrl?url='+escape(this.value)" />
+          </f:entry>
+          
+          <f:entry title="${%Token}" help="/plugin/cons3rt/help-token.html">
+            <c:select name="tokenId" field="tokenId" value="${instance.tokenId}" checkUrl="'${rootURL}/descriptorByName/io.jenkins.plugins.Cons3rtPublisher/checkTokenId?tokenId='+escape(this.value)" />
+          </f:entry>
+          
+          <f:section title="Choose Authentication Type">
+	          <!-- Radio block for username vs. certificate -->
+	    	  <f:radioBlock title="Certificate" name="authenticationType" value="certificate"
+	                checked="true" inline="true" help="/plugin/cons3rt/help-authenticationType.html">
+	      		  <nested>
+	      		    <f:entry title="${%Certificate}" help="/plugin/cons3rt/help-certificate.html">
+	                  <c:select name="certificateId" field="certificateId" value="${instance.certificateId}" checkUrl="'${rootURL}/descriptorByName/io.jenkins.plugins.Cons3rtPublisher/checkCertificateId?certificateId='+escape(this.value)" />
+	                </f:entry>
+	              
+	                <f:validateButton title="Check connection" progress="Checking..." method="certificateLoginCheck" with="url,tokenId,certificateId" />
+	              </nested>
+	    	  </f:radioBlock>
+	    	  
+	    	  <f:radioBlock title="Username" name="authenticationType" value="username"
+	          			checked="${instance.isAuthenticationType('username')}" inline="true">
+	              <nested>
+	                <f:entry title="${%Username}" help="/plugin/cons3rt/help-username.html">
+	                  <f:textbox name="username" value="${instance.username}" checkUrl="'${rootURL}/descriptorByName/io.jenkins.plugins.Cons3rtPublisher/checkUsername?username='+escape(this.value)" />
+	                </f:entry>
+	              
+	                <f:validateButton title="Check connection" progress="Checking..." method="usernameLoginCheck" with="url,tokenId,username" />
+	              </nested>
+	          </f:radioBlock>
+    	  </f:section>
+    	  
+    	  </j:jelly>
