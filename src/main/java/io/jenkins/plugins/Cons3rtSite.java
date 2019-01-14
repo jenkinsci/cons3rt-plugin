@@ -2,6 +2,7 @@ package io.jenkins.plugins;
 
 import java.io.IOException;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -12,11 +13,13 @@ import org.jenkinsci.plugins.plaincredentials.StringCredentials;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
+import org.kohsuke.stapler.Stapler;
 
 import com.cloudbees.plugins.credentials.CredentialsMatchers;
+import com.cloudbees.plugins.credentials.CredentialsNameProvider;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
+import com.cloudbees.plugins.credentials.CredentialsScope;
 import com.cloudbees.plugins.credentials.common.StandardCertificateCredentials;
-import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
 import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 
 import hudson.Extension;
@@ -24,6 +27,8 @@ import hudson.RelativePath;
 import hudson.model.AbstractDescribableImpl;
 import hudson.model.Descriptor;
 import hudson.model.Item;
+import hudson.model.Queue;
+import hudson.model.queue.Tasks;
 import hudson.security.ACL;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
@@ -31,6 +36,7 @@ import io.jenkins.plugins.datatype.Network;
 import io.jenkins.plugins.utils.HttpWrapper;
 import io.jenkins.plugins.utils.HttpWrapper.HTTPException;
 import io.jenkins.plugins.utils.HttpWrapper.HttpWrapperBuilder;
+import jenkins.model.Jenkins;
 
 public class Cons3rtSite extends AbstractDescribableImpl<Cons3rtSite> {
 
@@ -41,7 +47,7 @@ public class Cons3rtSite extends AbstractDescribableImpl<Cons3rtSite> {
 	public static final String certificateAuthentication = "certificate";
 
 	public static final String usernameAuthentication = "username";
-
+	
 	String url;
 
 	String tokenId;
@@ -168,16 +174,53 @@ public class Cons3rtSite extends AbstractDescribableImpl<Cons3rtSite> {
 	}
 
 	private StringCredentials lookupTokenCredentialsById(final String tokenCredentialId) {
-		final List<StringCredentials> all = CredentialsProvider.lookupCredentials(StringCredentials.class, (Item) null,
-				ACL.SYSTEM, NO_REQUIREMENTS);
+		final Set<StringCredentials> all = new HashSet<>();
 
+		Item item = Stapler.getCurrentRequest().findAncestorObject(Item.class);
+		
+		final List<StringCredentials> userBased = CredentialsProvider.lookupCredentials(
+				StringCredentials.class,
+				item,
+			    Jenkins.getAuthentication(),
+			    Cons3rtSite.NO_REQUIREMENTS);
+		
+		final List<StringCredentials> jobBased = CredentialsProvider.lookupCredentials(
+				StringCredentials.class,
+				item,
+				item instanceof Queue.Task
+			      ? Tasks.getAuthenticationOf((Queue.Task) item)
+			      : ACL.SYSTEM,
+			    Cons3rtSite.NO_REQUIREMENTS);
+		
+		all.addAll(userBased);
+		all.addAll(jobBased);
+		
 		return CredentialsMatchers.firstOrNull(all, CredentialsMatchers.withId(tokenCredentialId));
 	}
 
 	private StandardCertificateCredentials lookupCertificateCredentialsById(final String certificateCredentialId) {
-		final List<StandardCertificateCredentials> all = CredentialsProvider
-				.lookupCredentials(StandardCertificateCredentials.class, (Item) null, ACL.SYSTEM, NO_REQUIREMENTS);
-
+		
+		final Set<StandardCertificateCredentials> all = new HashSet<>();
+		
+		Item item = Stapler.getCurrentRequest().findAncestorObject(Item.class);
+		
+		final List<StandardCertificateCredentials> userBased = CredentialsProvider.lookupCredentials(
+				StandardCertificateCredentials.class,
+				item,
+			    Jenkins.getAuthentication(),
+			    Cons3rtSite.NO_REQUIREMENTS);
+		
+		final List<StandardCertificateCredentials> jobBased = CredentialsProvider.lookupCredentials(
+				StandardCertificateCredentials.class,
+				item,
+				item instanceof Queue.Task
+			      ? Tasks.getAuthenticationOf((Queue.Task) item)
+			      : ACL.SYSTEM,
+			    Cons3rtSite.NO_REQUIREMENTS);
+		
+		all.addAll(userBased);
+		all.addAll(jobBased);
+		
 		return CredentialsMatchers.firstOrNull(all, CredentialsMatchers.withId(certificateCredentialId));
 	}
 
@@ -307,16 +350,69 @@ public class Cons3rtSite extends AbstractDescribableImpl<Cons3rtSite> {
 			return "CONS3RT Site";
 		}
 
-		public ListBoxModel doFillCertificateIdItems(@AncestorInPath Item owner) {
+		public ListBoxModel doFillCertificateIdItems(@AncestorInPath Item job) {
 
-			return new StandardListBoxModel().includeMatchingAs(ACL.SYSTEM, owner, StandardCertificateCredentials.class,
-					Cons3rtSite.NO_REQUIREMENTS, CredentialsMatchers.always());
+			ListBoxModel result = new ListBoxModel();
+			Set<StandardCertificateCredentials> creds = new HashSet<>();
+	        Set<String> ids = new HashSet<String>();
+			
+			final List<StandardCertificateCredentials> userBased = CredentialsProvider.lookupCredentials(
+					StandardCertificateCredentials.class,
+				    job,
+				    Jenkins.getAuthentication(),
+				    Cons3rtSite.NO_REQUIREMENTS);
+			
+			final List<StandardCertificateCredentials> jobBased = CredentialsProvider.lookupCredentials(
+					StandardCertificateCredentials.class,
+				    job,
+				    job instanceof Queue.Task
+				      ? Tasks.getAuthenticationOf((Queue.Task) job)
+				      : ACL.SYSTEM,
+				    Cons3rtSite.NO_REQUIREMENTS);
+			
+			creds.addAll(userBased);
+			creds.addAll(jobBased);
+			
+			for( final StandardCertificateCredentials cred : creds ) {
+				if (ids.add(cred.getId())) {
+					result.add(CredentialsNameProvider.name(cred), cred.getId());
+	            }
+			}
+			
+	        return result;
 		}
 
-		public ListBoxModel doFillTokenIdItems(@AncestorInPath Item owner) {
-
-			return new StandardListBoxModel().includeMatchingAs(ACL.SYSTEM, owner, StringCredentials.class,
-					Cons3rtSite.NO_REQUIREMENTS, CredentialsMatchers.always());
+		public ListBoxModel doFillTokenIdItems(@AncestorInPath Item job) {
+			
+			ListBoxModel result = new ListBoxModel();
+			Set<StringCredentials> creds = new HashSet<>();
+	        Set<String> ids = new HashSet<String>();
+			
+			final List<StringCredentials> userBased = CredentialsProvider.lookupCredentials(
+					StringCredentials.class,
+				    job,
+				    Jenkins.getAuthentication(),
+				    Cons3rtSite.NO_REQUIREMENTS);
+			
+			final List<StringCredentials> jobBased = CredentialsProvider.lookupCredentials(
+					StringCredentials.class,
+				    job,
+				    job instanceof Queue.Task
+				      ? Tasks.getAuthenticationOf((Queue.Task) job)
+				      : ACL.SYSTEM,
+				    Cons3rtSite.NO_REQUIREMENTS);
+			
+			creds.addAll(userBased);
+			creds.addAll(jobBased);
+			
+			for( final StringCredentials cred : creds ) {
+				if (ids.add(cred.getId())) {
+					result.add(CredentialsNameProvider.name(cred), cred.getId());
+	            }
+			}
+			
+	        return result;
+			
 		}
 
 		public FormValidation doUsernameLoginCheck(@QueryParameter("url") String url,

@@ -20,6 +20,7 @@ import hudson.Extension;
 import hudson.RelativePath;
 import hudson.model.AbstractDescribableImpl;
 import hudson.model.Descriptor;
+import hudson.model.Item;
 import hudson.security.Permission;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
@@ -218,7 +219,7 @@ public class RunConfiguration extends AbstractDescribableImpl<RunConfiguration> 
 				@RelativePath("../../site") @QueryParameter String certificateId,
 				@RelativePath("../../site") @QueryParameter String username) throws ServletException, IOException {
 
-        	Jenkins.getInstance().checkPermission(Permission.UPDATE);
+        	Jenkins.getInstance().checkPermission(Item.CONFIGURE);
 
 			if (deploymentId != null) {
 				// Attempt to determine authenticationType as it appears it wont come across:
@@ -261,7 +262,7 @@ public class RunConfiguration extends AbstractDescribableImpl<RunConfiguration> 
 				@RelativePath("../../site") @QueryParameter String certificateId,
 				@RelativePath("../../site") @QueryParameter String username) throws IOException {
 
-			Jenkins.getInstance().checkPermission(Permission.UPDATE);
+			Jenkins.getInstance().checkPermission(Item.CONFIGURE);
 
 			if (deploymentId != null && cloudspaceName != null) {
 

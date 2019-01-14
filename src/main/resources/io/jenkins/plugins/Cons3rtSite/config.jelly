@@ -9,7 +9,7 @@
           </f:entry>
           
           <f:entry title="${%Token}" help="/plugin/cons3rt/help-token.html">
-            <c:select name="tokenId" field="tokenId" value="${instance.tokenId}" checkUrl="'${rootURL}/descriptorByName/io.jenkins.plugins.Cons3rtPublisher/checkTokenId?tokenId='+escape(this.value)" />
+            <c:select name="tokenId" field="tokenId" value="${instance.tokenId}" checkUrl="'${rootURL}/descriptorByName/io.jenkins.plugins.Cons3rtPublisher/checkTokenId?tokenId='+escape(this.value)" includeUser="true" />
           </f:entry>
           
           <f:section title="Choose Authentication Type">
@@ -18,7 +18,7 @@
 	                checked="true" inline="true" help="/plugin/cons3rt/help-authenticationType.html">
 	      		  <nested>
 	      		    <f:entry title="${%Certificate}" help="/plugin/cons3rt/help-certificate.html">
-	                  <c:select name="certificateId" field="certificateId" value="${instance.certificateId}" checkUrl="'${rootURL}/descriptorByName/io.jenkins.plugins.Cons3rtPublisher/checkCertificateId?certificateId='+escape(this.value)" />
+	                  <c:select name="certificateId" field="certificateId" value="${instance.certificateId}" checkUrl="'${rootURL}/descriptorByName/io.jenkins.plugins.Cons3rtPublisher/checkCertificateId?certificateId='+escape(this.value)" includeUser="true"/>
 	                </f:entry>
 	              
 	                <f:validateButton title="Check connection" progress="Checking..." method="certificateLoginCheck" with="url,tokenId,certificateId" />
