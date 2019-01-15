@@ -95,7 +95,7 @@ public class HostOption extends AbstractDescribableImpl<HostOption> {
 			
 			ListBoxModel m = new ListBoxModel();
 			
-			for (String role : Cons3rtPublisher.availableRoles) {
+			for (String role : Cons3rtPublisher.getAvailableRoles()) {
 				m.add(role);
 			}
 

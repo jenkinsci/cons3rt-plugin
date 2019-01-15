@@ -17,6 +17,7 @@ import org.kohsuke.stapler.StaplerRequest;
 
 import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.Extension;
 import hudson.FilePath;
 import hudson.Launcher;
@@ -47,49 +48,50 @@ public class Cons3rtPublisher extends Recorder {
 	private static final String createAssetAction = "createAsset";
 
 	private static final String updateAssetAction = "updateAsset";
-	
+
 	private static final String prebuiltAssetType = "prebuilt";
 
 	private static final String filepathAssetType = "filepath";
-	
+
 	private Cons3rtSite site;
-	
+
 	private Integer assetId;
-	
+
 	private String assetStyle;
-	
+
 	private String prebuiltAssetName;
-	
+
 	private String filepath;
 
 	private String actionType;
-	
-	private boolean attemptUploadOnBuildFailure;
-	
-	private boolean deleteCreatedAssetAfterUpload;
-	
-	private RunConfiguration launchRequest;
-	
-	public static final Map<Integer, Set<Entry<String, Integer>>> availableCloudspaces = new HashMap<>();
-	
-	public static final Set<String> availableRoles = new HashSet<>();
 
-	public static final Set<Network> availableNetworks = new HashSet<>();;
+	private boolean attemptUploadOnBuildFailure;
+
+	private boolean deleteCreatedAssetAfterUpload;
+
+	private RunConfiguration launchRequest;
+
+	private static final Map<Integer, Set<Entry<String, Integer>>> availableCloudspaces = new HashMap<>();
+
+	private static final Set<String> availableRoles = new HashSet<>();
+
+	private static final Set<Network> availableNetworks = new HashSet<>();
 
 	@DataBoundConstructor
-	public Cons3rtPublisher(final Cons3rtSite site, Integer assetId, String assetStyle, String filepath, final String prebuiltAssetName, final String actionType, final boolean attemptUploadOnBuildFailure,
+	public Cons3rtPublisher(final Cons3rtSite site, Integer assetId, String assetStyle, String filepath,
+			final String prebuiltAssetName, final String actionType, final boolean attemptUploadOnBuildFailure,
 			final boolean deleteCreatedAssetAfterUpload, final RunConfiguration launchRequest) {
-		
+
 		this.setSite(site);
-		
+
 		Cons3rtPublisher.LOGGER.log(Level.INFO, "Entering constructor with values: " + assetStyle + " " + actionType);
-		
+
 		this.setAssetStyle(assetStyle);
-		
-		if(this.assetStyle == null || this.assetStyle.isEmpty() ) {
+
+		if (this.assetStyle == null || this.assetStyle.isEmpty()) {
 			this.setAssetStyle(prebuiltAssetType);
 		}
-		
+
 		switch (this.getAssetStyle()) {
 		case Cons3rtPublisher.prebuiltAssetType:
 			this.prebuiltAssetName = prebuiltAssetName;
@@ -104,13 +106,13 @@ public class Cons3rtPublisher extends Recorder {
 			this.prebuiltAssetName = null;
 			break;
 		}
-		
+
 		this.actionType = actionType;
-		
-		if(this.actionType == null || this.actionType.isEmpty() ) {
+
+		if (this.actionType == null || this.actionType.isEmpty()) {
 			this.setActionType(createAssetAction);
 		}
-		
+
 		switch (this.getActionType()) {
 		case Cons3rtPublisher.createAssetAction:
 			this.setAssetId(null);
@@ -122,27 +124,29 @@ public class Cons3rtPublisher extends Recorder {
 			this.setAssetId(null);
 			break;
 		}
-		
+
 		this.attemptUploadOnBuildFailure = attemptUploadOnBuildFailure;
 		this.deleteCreatedAssetAfterUpload = deleteCreatedAssetAfterUpload;
 		this.launchRequest = launchRequest;
-		
-		if(this.launchRequest != null) {
-			this.launchRequest.setCloudspaceId(Cons3rtPublisher.getCloudspaceIdForName(this.launchRequest.getCloudspaceName()));
+
+		if (this.launchRequest != null) {
+			this.launchRequest
+					.setCloudspaceId(Cons3rtPublisher.getCloudspaceIdForName(this.launchRequest.getCloudspaceName()));
 		}
-		
-		LOGGER.log(Level.INFO, "Received Site: " + this.site.getUrl() + " with action type: " + this.actionType + " and asset id: " + this.assetId);
+
+		LOGGER.log(Level.INFO, "Received Site: " + this.site.getUrl() + " with action type: " + this.actionType
+				+ " and asset id: " + this.assetId);
 	}
 
 	public static Integer getCloudspaceIdForName(final String cloudspaceName) {
 		Integer retval = null;
-		if(cloudspaceName != null) {
-			for( final Entry<Integer, Set<Entry<String, Integer>>> entry : availableCloudspaces.entrySet()) {
-				
+		if (cloudspaceName != null) {
+			for (final Entry<Integer, Set<Entry<String, Integer>>> entry : availableCloudspaces.entrySet()) {
+
 				final Set<Entry<String, Integer>> cloudspaces = entry.getValue();
-				
-				for( final Entry<String, Integer> cloudspace : cloudspaces ) {
-					if( cloudspace.getKey().equals(cloudspaceName)) {
+
+				for (final Entry<String, Integer> cloudspace : cloudspaces) {
+					if (cloudspace.getKey().equals(cloudspaceName)) {
 						retval = cloudspace.getValue();
 						break;
 					}
@@ -177,9 +181,17 @@ public class Cons3rtPublisher extends Recorder {
 	}
 
 	public static Map<Integer, Set<Entry<String, Integer>>> getAvailableCloudspaces() {
-		return Cons3rtPublisher.availableCloudspaces;
+		return new HashMap<>(Cons3rtPublisher.availableCloudspaces);
 	}
-	
+
+	public static Set<String> getAvailableRoles() {
+		return new HashSet<>(Cons3rtPublisher.availableRoles);
+	}
+
+	public static Set<Network> getAvailableNetworks() {
+		return new HashSet<>(Cons3rtPublisher.availableNetworks);
+	}
+
 	public RunConfiguration getLaunchRequest() {
 		return launchRequest;
 	}
@@ -212,16 +224,15 @@ public class Cons3rtPublisher extends Recorder {
 		this.launchRequest = launchRequest;
 	}
 
-	
 	public static void addAvailableCloudspaces(final Integer key, final Set<Entry<String, Integer>> cloudspaces) {
 		Cons3rtPublisher.availableCloudspaces.put(key, cloudspaces);
 	}
-	
+
 	public static void setAvailableNetworks(Set<Network> availableNetworks) {
 		Cons3rtPublisher.availableNetworks.clear();
 		Cons3rtPublisher.availableNetworks.addAll(availableNetworks);
 	}
-	
+
 	public static void setAvailableRoles(Set<String> availableRoles) {
 		Cons3rtPublisher.availableRoles.clear();
 		Cons3rtPublisher.availableRoles.addAll(availableRoles);
@@ -247,127 +258,151 @@ public class Cons3rtPublisher extends Recorder {
 	public BuildStepMonitor getRequiredMonitorService() {
 		return BuildStepMonitor.NONE;
 	}
-	
+
 	@Override
+	@SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE",
+    justification = "Complained method is null checked for all parameters")
 	public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener)
 			throws InterruptedException, IOException {
-		
+
 		final ContextLogger log = new ContextLogger(listener.getLogger(), "CONS3RT Plugin", Level.INFO);
 
 		LOGGER.log(Level.INFO, "attemptUploadOnBuildFailure: " + this.attemptUploadOnBuildFailure);
-		
-		if (Result.ABORTED.equals(build.getResult())) {
-            log.log("Skipping asset upload or update as build was aborted.", Level.SEVERE);
-            return true;
-        }
-		
-		if (this.site == null) {
-			log.log("No CONS3RT site found. This is likely a configuration problem.", Level.SEVERE);
-			build.setResult(Result.UNSTABLE);
-			return true;
-		}
-		
-		if(!this.attemptUploadOnBuildFailure && build.getResult() != null && build.getResult().equals(Result.FAILURE) ) {
-			log.log("Skipping asset upload or update as build failed and user did not request to attempt upload on build failure.", Level.SEVERE);
-            return false;
-		} else if(this.attemptUploadOnBuildFailure && build.getResult() != null && build.getResult().equals(Result.FAILURE)){
-			log.log("Attempting to upload or update despite build failure, as requested.");
-		}
-		
-		final String baseUrl = this.site.getUrl();
-		final String token = this.site.getToken();
-		final String authenticationType = this.site.getAuthenticationType();
 
-		try {
-			log.log("Site Url: " + baseUrl + " authentication type: " + authenticationType + " action type: " + this.getActionType());
+		if (build != null) {
+			if (Result.ABORTED.equals(build.getResult())) {
+				log.log("Skipping asset upload or update as build was aborted.", Level.SEVERE);
+				return true;
+			}
 
-			final HttpWrapperBuilder builder = new HttpWrapper.HttpWrapperBuilder(baseUrl, token, authenticationType);
-			
-			if(Cons3rtPublisher.isCeritificateAuthentication(authenticationType)) {
-				builder.certificate(this.site.getCertificate());
-			} else if (Cons3rtPublisher.isUsernameAuthentication(authenticationType)) {
-				builder.username(this.site.getUsername());
+			if (this.site == null) {
+				log.log("No CONS3RT site found. This is likely a configuration problem.", Level.SEVERE);
+				build.setResult(Result.UNSTABLE);
+				return true;
 			}
-			
-			final HttpWrapper wrapper = builder.build();
-			
-			final FilePath providedPath;
-			switch (this.getAssetStyle()) {
-			case Cons3rtPublisher.prebuiltAssetType:
-				providedPath = AssetFileUtils.findPrebuiltAsset(build.getWorkspace(), this.prebuiltAssetName);
-				break;
-			case Cons3rtPublisher.filepathAssetType:
-				providedPath = new FilePath(build.getWorkspace(), this.getFilepath());
-				break;
-			default:
-				final String message = "Invalid asset type requested: " + this.getAssetStyle();
-				log.log(message, Level.SEVERE);
-				throw new IOException(message);
-			}
-			
-			final File assetZipForUpload = AssetFileUtils.getAssetZipFromPath(build.getWorkspace(), providedPath);
 
-			log.log("Using asset zip file: " + assetZipForUpload.getAbsolutePath());
-			
-			log.log("Received action type: " + this.getActionType());
-			
-			final String result;
-			switch (this.getActionType()) {
-			case Cons3rtPublisher.createAssetAction:
-				result = wrapper.createAsset(assetZipForUpload);
-				break;
-			case Cons3rtPublisher.updateAssetAction:
-				result = wrapper.updateAsset(this.assetId, assetZipForUpload);
-				break;
-			default:
-				final String message = "Invalid action type requested: " + this.getActionType();
-				log.log(message, Level.SEVERE);
-				throw new IOException(message);
+			if (!this.attemptUploadOnBuildFailure && Result.FAILURE.equals(build.getResult())) {
+				log.log("Skipping asset upload or update as build failed and user did not request to attempt upload on build failure.",
+						Level.SEVERE);
+				return false;
+			} else if (this.attemptUploadOnBuildFailure && Result.FAILURE.equals(build.getResult())) {
+				log.log("Attempting to upload or update despite build failure, as requested.");
 			}
-			
-			log.log(result);
-			
-			if(this.isRunRequested()) {
-				log.log("Launch of deployment " + this.launchRequest.getDeploymentId() + " into cloudspace " + this.launchRequest.getCloudspaceName() + " id " + this.getLaunchRequest().getCloudspaceId() + " was requested.");
-				final String deploymentRunId= wrapper.launchDeployment(this.launchRequest);
-				log.log("Launch was successful. Deployment run id: " + deploymentRunId);
-			} else {
-				log.log("No deployment launch was requested.");
-			}
-			
-			// Attempt to delete pre-built asset:
-			if(prebuiltAssetType.equals(this.assetStyle) && this.deleteCreatedAssetAfterUpload) {
-				log.log("Deletion of created asset was requested. Attempting to delete: " + assetZipForUpload.getName());
-				final boolean deleted = assetZipForUpload.delete();
-				
-				if(!deleted) {
-					log.log("Failed to delete: " + assetZipForUpload.getName());
+
+			final String baseUrl = this.site.getUrl();
+			final String token = this.site.getToken();
+			final String authenticationType = this.site.getAuthenticationType();
+
+			try {
+				log.log("Site Url: " + baseUrl + " authentication type: " + authenticationType + " action type: "
+						+ this.getActionType());
+
+				final HttpWrapperBuilder builder = new HttpWrapper.HttpWrapperBuilder(baseUrl, token,
+						authenticationType);
+
+				if (Cons3rtPublisher.isCeritificateAuthentication(authenticationType)) {
+					builder.certificate(this.site.getCertificate());
+				} else if (Cons3rtPublisher.isUsernameAuthentication(authenticationType)) {
+					builder.username(this.site.getUsername());
 				}
+
+				final HttpWrapper wrapper = builder.build();
+
+				final FilePath providedPath;
+				if (build.getWorkspace() != null) {
+					switch (this.getAssetStyle()) {
+					case Cons3rtPublisher.prebuiltAssetType:
+						if(this.prebuiltAssetName != null) {
+							providedPath = AssetFileUtils.findPrebuiltAsset(build.getWorkspace(), this.prebuiltAssetName);
+						} else {
+							final String message = "Asset type requested: " + this.getAssetStyle() + " but no pre-built asset name provided.";
+							log.log(message, Level.SEVERE);
+							throw new IOException(message);
+						}
+						break;
+					case Cons3rtPublisher.filepathAssetType:
+						providedPath = new FilePath(build.getWorkspace(), this.getFilepath());
+						break;
+					default:
+						final String message = "Invalid asset type requested: " + this.getAssetStyle();
+						log.log(message, Level.SEVERE);
+						throw new IOException(message);
+					}
+				} else {
+					final String message = "This build has no workspace an asset will not be able to be found for asset type: "
+							+ this.getAssetStyle();
+					log.log(message, Level.SEVERE);
+					throw new IOException(message);
+				}
+
+				final File assetZipForUpload = AssetFileUtils.getAssetZipFromPath(build.getWorkspace(), providedPath);
+
+				log.log("Using asset zip file: " + assetZipForUpload.getAbsolutePath());
+
+				log.log("Received action type: " + this.getActionType());
+
+				final String result;
+				switch (this.getActionType()) {
+				case Cons3rtPublisher.createAssetAction:
+					result = wrapper.createAsset(assetZipForUpload);
+					break;
+				case Cons3rtPublisher.updateAssetAction:
+					result = wrapper.updateAsset(this.assetId, assetZipForUpload);
+					break;
+				default:
+					final String message = "Invalid action type requested: " + this.getActionType();
+					log.log(message, Level.SEVERE);
+					throw new IOException(message);
+				}
+
+				log.log(result);
+
+				if (this.isRunRequested()) {
+					log.log("Launch of deployment " + this.launchRequest.getDeploymentId() + " into cloudspace "
+							+ this.launchRequest.getCloudspaceName() + " id "
+							+ this.getLaunchRequest().getCloudspaceId() + " was requested.");
+					final String deploymentRunId = wrapper.launchDeployment(this.launchRequest);
+					log.log("Launch was successful. Deployment run id: " + deploymentRunId);
+				} else {
+					log.log("No deployment launch was requested.");
+				}
+
+				// Attempt to delete pre-built asset:
+				if (prebuiltAssetType.equals(this.assetStyle) && this.deleteCreatedAssetAfterUpload) {
+					log.log("Deletion of created asset was requested. Attempting to delete: "
+							+ assetZipForUpload.getName());
+					final boolean deleted = assetZipForUpload.delete();
+
+					if (!deleted) {
+						log.log("Failed to delete: " + assetZipForUpload.getName());
+					}
+				}
+			} catch (HTTPException | ParseException | SecurityException e) {
+				log.log("Caught: " + e.getClass().getName() + " message: " + e.getMessage(), Level.SEVERE);
+				build.setResult(Result.FAILURE);
+				return false;
 			}
 			
-		} catch (HTTPException | ParseException | SecurityException e) {
-			log.log("Caught: " + e.getClass().getName() + " message: " + e.getMessage(), Level.SEVERE);
-			build.setResult(Result.FAILURE);
+			return true;
+		} else {
 			return false;
-		} 
-
-		return true;
+		}
 	}
-	
+
 	public boolean isActionType(String given) {
 		return this.actionType.equals(given);
 	}
-	
+
 	public boolean isAssetStyle(String given) {
 		return this.assetStyle.equals(given);
 	}
 
 	public String runRequested() {
-		final String retval = ( this.getLaunchRequest() != null ) ? "true" : "false";
+		final String retval = (this.getLaunchRequest() != null) ? "true" : "false";
 		Cons3rtPublisher.LOGGER.log(Level.INFO, "runRequested equals: " + retval);
 		return retval;
 	}
-	
+
 	public boolean isRunRequested() {
 		return Boolean.valueOf(this.runRequested());
 	}
@@ -412,15 +447,17 @@ public class Cons3rtPublisher extends Recorder {
 		@Override
 		public Publisher newInstance(StaplerRequest req, JSONObject formData)
 				throws hudson.model.Descriptor.FormException {
-			
+
 			final String output = formData.toString();
-        	LOGGER.info(output);
-			
-			if(req != null) {
+			LOGGER.info(output);
+
+			if (req != null) {
 				final Cons3rtPublisher instance = (Cons3rtPublisher) req.bindJSON(clazz, formData);
-				
-				Cons3rtPublisher.LOGGER.log(Level.INFO, "Entering new instance with values: " + instance.assetStyle + " " + instance.actionType);
-				Cons3rtPublisher.LOGGER.log(Level.INFO, "Entering new instance with values: " + instance.getSite().getUrl());
+
+				Cons3rtPublisher.LOGGER.log(Level.INFO,
+						"Entering new instance with values: " + instance.assetStyle + " " + instance.actionType);
+				Cons3rtPublisher.LOGGER.log(Level.INFO,
+						"Entering new instance with values: " + instance.getSite().getUrl());
 
 				return instance;
 			} else {
@@ -434,42 +471,44 @@ public class Cons3rtPublisher extends Recorder {
 			}
 			return FormValidation.ok();
 		}
-		
+
 		public FormValidation doCheckCertificateId(@QueryParameter("certificateId") String certificateId) {
 			if ((certificateId == null) || (certificateId.trim().isEmpty())) {
 				return FormValidation.error("Certificate not specified!");
 			}
 			return FormValidation.ok();
 		}
-		
+
 		public FormValidation doCheckDeploymentId(@QueryParameter("deploymentId") Integer deploymentId) {
 			if ((deploymentId == null) || (deploymentId < 0)) {
 				return FormValidation.error("An existing deployment id must be provided");
 			}
 			return FormValidation.ok();
 		}
-		
-		public FormValidation doCheckDeploymentRunUsername(@QueryParameter("deploymentRunUsername") String deploymentRunUsername) {
+
+		public FormValidation doCheckDeploymentRunUsername(
+				@QueryParameter("deploymentRunUsername") String deploymentRunUsername) {
 			if ((deploymentRunUsername == null) || (deploymentRunUsername.trim().isEmpty())) {
 				return FormValidation.error("A username must be provided");
 			}
-			
+
 			try {
 				NameUtils.checkCreatedUsernameRestrictions(deploymentRunUsername);
 			} catch (io.jenkins.plugins.exceptions.InvalidNameException e) {
 				return FormValidation.error(e.getMessage());
 			}
-			
+
 			return FormValidation.ok();
 		}
-		
-		public FormValidation doCheckDeploymentRunPassword(@QueryParameter("deploymentRunPassword") String deploymentRunPassword) {
+
+		public FormValidation doCheckDeploymentRunPassword(
+				@QueryParameter("deploymentRunPassword") String deploymentRunPassword) {
 			if ((deploymentRunPassword == null) || (deploymentRunPassword.trim().isEmpty())) {
 				return FormValidation.error("A password must be provided");
 			}
 			return FormValidation.ok();
 		}
-		
+
 		public FormValidation doCheckDeploymentRunName(@QueryParameter("deploymentRunName") String deploymentRunName) {
 			try {
 				NameUtils.checkDeploymentRunNameRestrictions(deploymentRunName);
@@ -513,7 +552,7 @@ public class Cons3rtPublisher extends Recorder {
 			}
 			return FormValidation.ok();
 		}
-		
+
 		public ListBoxModel doFillPrebuiltAssetNameItems() {
 			LOGGER.info("Entering load prebuild names");
 			final StandardListBoxModel retval = new StandardListBoxModel();
@@ -523,7 +562,7 @@ public class Cons3rtPublisher extends Recorder {
 			}
 			return retval;
 		}
-		
+
 	}
 
 }

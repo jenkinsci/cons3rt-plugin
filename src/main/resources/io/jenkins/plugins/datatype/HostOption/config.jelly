@@ -17,7 +17,7 @@
       </f:block>
     </f:section>
     
-    <f:entry title="Memory" field="ram">
+    <f:entry title="Memory (in MB)" field="ram">
     	<f:number name="ram" value="${instance.ram}"/>
     </f:entry>
     

@@ -36,6 +36,8 @@ import io.jenkins.plugins.exceptions.InvalidNameException;
  */
 public final class NameUtils {
 
+	private static final String invalidChars = "!@#$%^&*;:\"<>?/\\'`~+={}[],";
+	
     /**
      * Instantiates a new asset name utils.
      */
@@ -60,8 +62,6 @@ public final class NameUtils {
         } else if (name.trim().length() != name.length()) {
             throw new InvalidNameException("Asset name cannot have leading or trailing whitespace", "<" + name + ">");
         }
-
-        final String invalidChars = "!@#$%^&*;:\"<>?/\\'`~+={}[],";
 
         // does the name contain invalid characters
         if (!NameUtils.containsNone(name, invalidChars.toCharArray())) {
@@ -114,8 +114,6 @@ public final class NameUtils {
         } else if (name.trim().length() != name.length()) {
             throw new InvalidNameException("Deployment run name cannot have leading or trailing whitespace", "<" + name + ">");
         }
-
-        final String invalidChars = "!@#$%^&*;:\"<>?/\\'`~+={}[],";
 
         // does the name contain invalid characters
         if (!NameUtils.containsNone(name, invalidChars.toCharArray())) {

@@ -14,14 +14,12 @@ import javax.servlet.ServletException;
 
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
-import org.kohsuke.stapler.StaplerRequest;
 
 import hudson.Extension;
 import hudson.RelativePath;
 import hudson.model.AbstractDescribableImpl;
 import hudson.model.Descriptor;
 import hudson.model.Item;
-import hudson.security.Permission;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import hudson.util.Secret;
@@ -29,7 +27,6 @@ import io.jenkins.plugins.Cons3rtPublisher;
 import io.jenkins.plugins.Cons3rtSite;
 import io.jenkins.plugins.utils.HttpWrapper.HTTPException;
 import jenkins.model.Jenkins;
-import net.sf.json.JSONObject;
 
 public class RunConfiguration extends AbstractDescribableImpl<RunConfiguration> {
 	
@@ -188,9 +185,9 @@ public class RunConfiguration extends AbstractDescribableImpl<RunConfiguration> 
     		
     		LOGGER.info("Calling do fill cloudspaces with dep id: " + deploymentId + " and site value: " + ((site != null) ? "non-null" : "null"));
     		
-    		if(Cons3rtPublisher.availableCloudspaces.containsKey(deploymentId)) {
+    		if(Cons3rtPublisher.getAvailableCloudspaces().containsKey(deploymentId)) {
     			
-    			final Set<Entry<String, Integer>> cloudspaces = Cons3rtPublisher.availableCloudspaces.get(deploymentId);
+    			final Set<Entry<String, Integer>> cloudspaces = Cons3rtPublisher.getAvailableCloudspaces().get(deploymentId);
     			
     			for (Entry<String, Integer> cloudspace : cloudspaces) {
         			m.add(cloudspace.getKey());
@@ -200,7 +197,7 @@ public class RunConfiguration extends AbstractDescribableImpl<RunConfiguration> 
 				try {
 					Cons3rtPublisher.addAvailableCloudspaces(deploymentId, site.getAvailableCloudspaces(LOGGER, deploymentId));
 				
-					for (Entry<String, Integer> cloudspace : Cons3rtPublisher.availableCloudspaces.get(deploymentId)) {
+					for (Entry<String, Integer> cloudspace : Cons3rtPublisher.getAvailableCloudspaces().get(deploymentId)) {
 		    			m.add(cloudspace.getKey());
 		    		}
 				} catch (HTTPException e) {
@@ -244,14 +241,6 @@ public class RunConfiguration extends AbstractDescribableImpl<RunConfiguration> 
 				return FormValidation.error("A deployment id must be provided in order to fetch available cloudspaces for the deployment.");
 			}
 
-		}
-        
-        @Override
-		public RunConfiguration newInstance(StaplerRequest req, JSONObject formData)
-				throws hudson.model.Descriptor.FormException {
-			LOGGER.info("New run conf instance: " + formData.toString());
-        	
-        	return req.bindJSON(clazz, formData);
 		}
         
 		public FormValidation doGetResources(@QueryParameter("deploymentId") Integer deploymentId,

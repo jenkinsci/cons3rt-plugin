@@ -88,7 +88,7 @@ public class NetworkInterface extends AbstractDescribableImpl<NetworkInterface> 
         	
         	ListBoxModel m = new ListBoxModel();
         	
-    		for (Network network : Cons3rtPublisher.availableNetworks) {
+    		for (Network network : Cons3rtPublisher.getAvailableNetworks()) {
     			m.add(network.getName());
     		}
     		

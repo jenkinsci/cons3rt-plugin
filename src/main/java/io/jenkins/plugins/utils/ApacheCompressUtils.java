@@ -60,6 +60,8 @@ import org.slf4j.LoggerFactory;
 
 import com.sun.jna.Platform;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 /**
  * The Class ApacheCompressUtils.
  */
@@ -83,6 +85,8 @@ public class ApacheCompressUtils {
      * @param includeBaseDir the include base dir
      * @return the name of an archive entry
      */
+    @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE",
+    	    justification = "Complained method is null checked for all parameters")
     private static String getEntryName(final Path baseDirPath, Path fullFilePath, boolean includeBaseDir) {
         final String entryName;
         if (includeBaseDir) {
@@ -144,6 +148,8 @@ public class ApacheCompressUtils {
      * @throws IOException          Signals that an I/O exception has occurred.
      * @throws InvalidPathException the invalid path exception
      */
+    @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE",
+    	    justification = "Complained method is null checked for all parameters")
     public static void unzipIntoDirFromZipFile(final Path outputDirPath, final Path zipFilePath,
             final List<String> filesToInclude) throws IOException, InvalidPathException {
 
@@ -309,6 +315,8 @@ public class ApacheCompressUtils {
      * @throws IOException          Signals that an I/O exception has occurred.
      * @throws InvalidPathException the invalid path exception
      */
+    @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE",
+    	    justification = "Complained method is null checked for all parameters")
     public static void zipIntoZipFileFromDir(final Path destZipFilePath, final Path sourceDirPath,
             final boolean includeSourceDir, final String extensionToMatch) throws IOException, InvalidPathException {
 
@@ -389,6 +397,8 @@ public class ApacheCompressUtils {
                  * java.nio.file.attribute.BasicFileAttributes)
                  */
                 @Override
+                @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE",
+        	    justification = "Complained method is null checked for all parameters")
                 public FileVisitResult visitFile(final Path filePath, final BasicFileAttributes attrs)
                         throws IOException {
 
